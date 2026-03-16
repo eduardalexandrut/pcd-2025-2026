@@ -10,7 +10,7 @@ public class ConcurrentSort {
 	public static void main(String[] args) {
 	
 		
-		int nSortingWorkers = 20; // best number in theory: Runtime.getRuntime().availableProcessors() + 1
+		int nSortingWorkers = Runtime.getRuntime().availableProcessors() + 1;
 		
 		log("Num elements to sort: " + VECTOR_SIZE);
 		log("Num sorting workers: " + nSortingWorkers);
