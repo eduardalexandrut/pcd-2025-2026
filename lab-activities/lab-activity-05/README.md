@@ -31,6 +31,10 @@ v1.0.0-20260309
      - `pcd.lab05.monitors.TestSemantics2` (raw monitor impl, different timings)
          - Like previous case, but Thread #3 requests to enter before Thread #1 executes the wait, so it is already in the entry set when Thread #1 executes the wait   
      - `pcd.lab05.monitors.TestSemantics3`  
-         - monitor impl. Based on Locks+Cond   
+         - monitor impl. Based on Locks+Cond
+
+### Assignment #01 - First announcement and presentation
+
+- [Description](https://github.com/pslab-unibo/pcd-2025-2026/tree/master/assignments/assignment-01)
 
  
