@@ -1,0 +1,63 @@
+package pcd.poool.controller;
+
+import pcd.poool.model.BallState;
+import pcd.poool.model.Physics;
+import pcd.sketch02.util.BoundedBuffer;
+import pcd.sketch02.util.BoundedBufferImpl;
+
+import java.nio.Buffer;
+import java.util.List;
+
+public class ControllerImpl extends Thread implements Controller {
+    private final BoundedBuffer<Cmd> cmdBuffer;
+    private final Physics model;
+
+    public ControllerImpl(Physics model) {
+        this.model = model;
+        this.cmdBuffer = new BoundedBufferImpl<>(100);
+    }
+
+    @Override
+    public void run() {
+        System.out.println("Controller Thread started...");
+        while (!isInterrupted()) {
+            try {
+                // 1. This BLOCKS until processInput puts something in the buffer
+                Cmd cmd = cmdBuffer.get();
+
+                // 2. This runs the command (for now, it will just print)
+                cmd.execute(model);
+
+            } catch (InterruptedException e) {
+                System.out.println("Controller interrupted.");
+                break;
+            }
+        }
+    }
+
+    @Override
+    public void processInput(String key) {
+        Cmd moveCmd = new MoveUserCmd(key);
+
+        try {
+            cmdBuffer.put(moveCmd);
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public BallState getUserBallState() {
+        return null;
+    }
+
+    @Override
+    public BallState getNPCBallState() {
+        return null;
+    }
+
+    @Override
+    public List<BallState> getStateSnapshot() {
+        return List.of();
+    }
+}

@@ -11,9 +11,9 @@ public interface Physics {
     void computeState(long dt);
 
     /**
-     * @param ball The User's ball.
+     * @param position The User's ball position.
      */
-    void updateUserBall(Ball ball);
+    void updateUserBall(P2d position);
 
     /**
      * @param ball The NPC's ball.
