@@ -22,10 +22,7 @@ public class ControllerImpl extends Thread implements Controller {
         System.out.println("Controller Thread started...");
         while (!isInterrupted()) {
             try {
-                // 1. This BLOCKS until processInput puts something in the buffer
                 Cmd cmd = cmdBuffer.get();
-
-                // 2. This runs the command (for now, it will just print)
                 cmd.execute(model);
 
             } catch (InterruptedException e) {

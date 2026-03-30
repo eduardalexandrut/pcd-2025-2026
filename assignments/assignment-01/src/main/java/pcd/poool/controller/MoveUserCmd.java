@@ -13,7 +13,6 @@ public class MoveUserCmd implements Cmd {
 
     @Override
     public void execute(Physics model) {
-        // This is the logic that will run inside the ActiveController thread
         System.out.println("[Controller Thread] Processing move: " + key);
 
         // Map the key to a direction
@@ -25,8 +24,6 @@ public class MoveUserCmd implements Cmd {
             case "D" -> dx = 1;
         }
 
-        // Tell the model to update the user ball
-        // The model will handle the 'enter()' and 'exit()' of monitors
         model.updateUserBall(new P2d(dx, dy));
     }
 }
