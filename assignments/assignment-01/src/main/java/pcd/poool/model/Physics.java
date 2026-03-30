@@ -1,0 +1,37 @@
+package pcd.poool.model;
+
+import java.util.List;
+
+public interface Physics {
+
+    /**
+     * Main method that calculates the balls position and handles the collisions
+     * @param dt time
+     */
+    void computeState(long dt);
+
+    /**
+     * @param ball The User's ball.
+     */
+    void updateUserBall(Ball ball);
+
+    /**
+     * @param ball The NPC's ball.
+     */
+    void updateNPCBall(Ball ball);
+
+    /**
+     * @return the current state of the User's ball.
+     */
+    BallState getUserBallState();
+
+    /**
+     * @return the current state of the NPC's ball.
+     */
+    BallState getNPCBallState();
+
+    /**
+     * @return a snapshot DTO of all the balls' state.
+     */
+    List<BallState> getStateSnapshot();
+}
