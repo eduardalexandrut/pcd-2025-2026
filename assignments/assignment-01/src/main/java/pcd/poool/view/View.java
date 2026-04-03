@@ -1,6 +1,7 @@
 package pcd.poool.view;
 
 import pcd.poool.controller.Controller;
+import pcd.poool.model.BallState;
 import pcd.poool.model.Physics;
 
 import javax.swing.*;
@@ -24,6 +25,12 @@ public class View extends JFrame {
         setResizable(false);
         panel = new VisualiserPanel(w,h);
         getContentPane().add(panel);
+
+        javax.swing.Timer timer = new javax.swing.Timer(16, e -> {
+            panel.repaint(); // This tells Swing to call paintComponent
+        });
+        timer.start();
+
         addWindowListener(new WindowAdapter(){
             public void windowClosing(WindowEvent ev){
                 System.exit(-1);
@@ -49,6 +56,7 @@ public class View extends JFrame {
 
         this.setFocusable(true);
         this.requestFocusInWindow();
+
     }
 
     public void render(){
@@ -67,47 +75,31 @@ public class View extends JFrame {
             delta = Math.min(ox, oy);
         }
 
-        public void paint(Graphics g){
+        @Override
+        protected void paintComponent(Graphics g) {
+            super.paintComponent(g); // This handles the clearRect and background
             Graphics2D g2 = (Graphics2D) g;
 
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING,
-                    RenderingHints.VALUE_ANTIALIAS_ON);
-            g2.setRenderingHint(RenderingHints.KEY_RENDERING,
-                    RenderingHints.VALUE_RENDER_QUALITY);
-            g2.clearRect(0,0,this.getWidth(),this.getHeight());
+            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
 
+            // --- 1. DRAW THE CROSSHAIR (from your old paint method) ---
             g2.setColor(Color.LIGHT_GRAY);
             g2.setStroke(new BasicStroke(1));
-            g2.drawLine(ox,0,ox,oy*2);
-            g2.drawLine(0,oy,ox*2,oy);
-            g2.setColor(Color.BLACK);
+            g2.drawLine(ox, 0, ox, oy * 2);
+            g2.drawLine(0, oy, ox * 2, oy);
 
-            g2.setStroke(new BasicStroke(1));
-//            for (var b: model.getBalls()) {
-//                var p = b.pos();
-//                int x0 = (int)(ox + p.x()*delta);
-//                int y0 = (int)(oy - p.y()*delta);
-//                int radiusX = (int)(b.radius()*delta);
-//                int radiusY = (int)(b.radius()*delta);
-//                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-//            }
-//
-//            g2.setStroke(new BasicStroke(3));
-//            var pb = model.getPlayerBall();
-//            if (pb != null) {
-//                var p1 = pb.pos();
-//                int x0 = (int)(ox + p1.x()*delta);
-//                int y0 = (int)(oy - p1.y()*delta);
-//                int radiusX = (int)(pb.radius()*delta);
-//                int radiusY = (int)(pb.radius()*delta);
-//                g2.drawOval(x0 - radiusX,y0 - radiusY,radiusX*2,radiusY*2);
-//            }
-//
-//            g2.setStroke(new BasicStroke(1));
-//            g2.drawString("Num small balls: " + model.getBalls().size(), 20, 40);
-//            g2.drawString("Frame per sec: " + model.getFramePerSec(), 20, 60);
-//
-//            sync.notifyFrameRendered();
+            // --- 2. DRAW THE BALLS ---
+            g2.setColor(Color.BLUE);
+            for (BallState b : controller.getStateSnapshot()) {
+                int x = (int) b.pos().x();
+                int y = (int) b.pos().y();
+                int r = (int) b.radius();
+
+                // Draw relative to the center (ox, oy)
+                // OR draw using raw coordinates.
+                // Since Main uses (400, 300), let's draw raw:
+                g2.fillOval(x - r, y - r, r * 2, r * 2);
+            }
 
         }
 

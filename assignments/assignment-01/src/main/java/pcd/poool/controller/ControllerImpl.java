@@ -55,6 +55,6 @@ public class ControllerImpl extends Thread implements Controller {
 
     @Override
     public List<BallState> getStateSnapshot() {
-        return List.of();
+        return this.model.getStateSnapshot();
     }
 }

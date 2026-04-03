@@ -2,7 +2,7 @@ package pcd.poool.model;
 
 public record BallState(P2d pos, V2d vel, double radius) {
 
-    public BallState fromBall(final Ball ball){
+    public static BallState fromBall(final Ball ball){
         return new BallState(ball.getPos(), ball.getVel(), ball.getRadius());
     }
 }
