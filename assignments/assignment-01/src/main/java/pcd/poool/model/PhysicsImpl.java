@@ -43,6 +43,7 @@ public class PhysicsImpl implements Physics{
 
     @Override
     public void computeState(long dt) {
+        this.userBall.updateState(dt, board);
         int nThreads = 1;//Runtime.getRuntime().availableProcessors();
         final PhaseLatch barrier = new PhaseLatch(nThreads);
         final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
@@ -129,6 +130,11 @@ public class PhysicsImpl implements Physics{
         }
     }
 
+    @Override
+    public void updateUserVelocity(double vx, double vy) {
+        this.userBall.setVelocity(new V2d(vx, vy));
+    }
+
     private void multiLockResolver(int r, int c, int nr, int nc) {
         final Cell cell1 = this.cells[r][c];
         final Cell cell2 = this.cells[nr][nc];
@@ -159,7 +165,7 @@ public class PhysicsImpl implements Physics{
 
     @Override
     public void updateUserBall(P2d position) {
-
+        this.userBall.setPosition(position);
     }
 
     @Override

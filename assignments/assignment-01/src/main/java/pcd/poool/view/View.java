@@ -46,12 +46,22 @@ public class View extends JFrame {
             @Override
             public void keyPressed(KeyEvent e) {
                 String key = KeyEvent.getKeyText(e.getKeyCode()).toUpperCase();
-                System.out.println("[UI Thread] Key pressed: " + key);
 
                 if ("WASD".contains(key)) {
                     controller.processInput(key);
                 }
             }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                String key = KeyEvent.getKeyText(e.getKeyCode()).toUpperCase();
+
+                if ("WASD".contains(key)) {
+                    controller.processInput("STOP_ " + key);
+                }
+            }
+
+
         });
 
 

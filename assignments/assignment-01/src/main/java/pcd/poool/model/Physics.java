@@ -38,4 +38,6 @@ public interface Physics {
     void updateRowMovement(int r, long dt);
 
     void resolveRowCollisions(int r);
+
+    void updateUserVelocity(double vx, double vy);
 }

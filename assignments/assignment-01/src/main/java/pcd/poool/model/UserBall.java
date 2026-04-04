@@ -26,4 +26,16 @@ public class UserBall extends Ball {
             return new P2d(pos.x(), pos.y());
         } finally { this.lock.unlock(); }
     }
+
+    public void setVelocity(V2d vel) {
+        if (this.lock.tryLock()) {
+            try {
+                super.kick(vel);
+            } finally {
+                this.lock.unlock();
+            }
+        } else {
+            System.out.println("UserBall lock busy, dropping input frame");
+        }
+    }
 }
