@@ -34,4 +34,8 @@ public interface Physics {
      * @return a snapshot DTO of all the balls' state.
      */
     List<BallState> getStateSnapshot();
+
+    void updateRowMovement(int r, long dt);
+
+    void resolveRowCollisions(int r);
 }

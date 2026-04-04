@@ -35,30 +35,30 @@ public class PhysicsImpl implements Physics{
 
     @Override
     public void computeState(long dt) {
-        // All cells update movement
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                List<Ball> leaving = cells[i][j].updateMovement(dt, board, cellWidth, cellHeight, i, j);
-                for (Ball b : leaving) {
-                    transferToCorrectCell(b);
-                }
+        int nThreads = 1;//Runtime.getRuntime().availableProcessors();
+        final PhaseLatch barrier = new PhaseLatch(nThreads);
+        final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
+
+        final int rowsPerThread = this.rows / nThreads;
+
+        for (int i = 0; i < nThreads; i++) {
+            int start = i * rowsPerThread;
+            int end = (i == nThreads - 1) ? rows - 1 : (start + rowsPerThread - 1);
+
+            workers[i] = new PhysicsWorker(this, barrier, start, end, dt);
+            workers[i].start();
+        }
+
+        for (PhysicsWorker w : workers) {
+            try {
+                w.join();
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
             }
         }
 
-        // Resolve Collisions (Only after movement is guaranteed done)
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                // In a multi-threaded env, you would call grid[i][j].waitProcessed() here
-                resolveCellCollisions(i, j);
-            }
-        }
+        this.resetCells();
 
-        // Prepare for next frame
-        for (int i = 0; i < rows; i++) {
-            for (int j = 0; j < cols; j++) {
-                cells[i][j].resetFrame();
-            }
-        }
     }
 
     private void transferToCorrectCell(Ball b) {
@@ -76,31 +76,36 @@ public class PhysicsImpl implements Physics{
         this.cells[r][c].addBall(b);
     }
 
-    private void resolveCellCollisions(int r, int c) {
-        final Cell current = this.cells[r][c];
+    @Override
+    public void updateRowMovement(int r, long dt) {
+        for (int c = 0; c < cols; c++) {
+            List<Ball> leavers = cells[r][c].updateMovement(dt, board, cellWidth, cellHeight, r, c);
 
-        current.lock();
-
-        // Handle internal collisions
-        try {
-            for (int i = 0; i < current.getBalls().size(); i++) {
-                for (int j = i + 1; j < current.getBalls().size(); j++) {
-                    Ball.resolveCollision(current.getBalls().get(i), current.getBalls().get(j));
-                }
+            for (Ball b : leavers) {
+                transferToCorrectCell(b);
             }
-        } finally {
-            current.unlock();
         }
+    }
 
-        // Handle collision among balls of different cells at the borders
-        int[][] directions = {{0, 1}, {0, -1}, {1, 0}, {-1, 0}};
+    public void resolveRowCollisions(int r) {
 
-        for (int[] d:  directions) {
-            int nr =  r + d[0];
-            int nc = c + d[1];
+        for (int c = 0; c < cols; c++) {
 
-            if (isValid(nr, nc)) {
-                multiLockResolver(r, c, nr, nc);
+            final Cell current = this.cells[r][c];
+
+            // Handle internal collisions
+            current.resolveInternalCollisions();
+
+            // Handle collision among balls of different cells at the borders
+            int[][] directions = {{0, 1}, {1, 1}, {1, 0}, {1, -1}};
+
+            for (int[] d:  directions) {
+                int nr =  r + d[0];
+                int nc = c + d[1];
+
+                if (isValid(nr, nc)) {
+                    multiLockResolver(r, c, nr, nc);
+                }
             }
         }
     }
@@ -174,6 +179,7 @@ public class PhysicsImpl implements Physics{
         return snapshot;
     }
 
+
     private void syncBoard(final Board board) {
 
         for (final Ball ball : board.getBalls()) {
@@ -185,6 +191,15 @@ public class PhysicsImpl implements Physics{
             c = Math.max(0, Math.min(c, cols - 1));
 
             this.cells[r][c].addBall(ball);
+        }
+    }
+
+
+    private void resetCells() {
+        for (int r = 0; r < rows; r++) {
+            for (int c = 0; c < cols; c++) {
+                cells[r][c].reset();
+            }
         }
     }
 }

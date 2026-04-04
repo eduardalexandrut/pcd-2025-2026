@@ -44,6 +44,21 @@ public class Cell {
         }
     }
 
+    public void resolveInternalCollisions() {
+        this.lock();
+
+        // Handle internal collisions
+        try {
+            for (int i = 0; i < this.balls.size(); i++) {
+                for (int j = i + 1; j < this.balls.size(); j++) {
+                    Ball.resolveCollision(this.balls.get(i), this.balls.get(j));
+                }
+            }
+        } finally {
+            this.unlock();
+        }
+    }
+
     /**
      * Barrier Logic: Wait until this cell has finished its movement phase.
      */
@@ -60,12 +75,23 @@ public class Cell {
 
     public void resetFrame() {
         lock.lock();
-        try { processed = false; } finally { lock.unlock(); }
+        try {
+            processed = false;
+        } finally {
+            lock.unlock();
+        }
     }
 
     public void addBall(Ball b) {
         lock.lock();
         try { balls.add(b); } finally { lock.unlock(); }
+    }
+
+    public void reset() {
+        this.lock.lock();
+        try {
+            this.processed = false;
+        } finally { this.lock.unlock(); }
     }
 
     public void lock() { lock.lock(); }
