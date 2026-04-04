@@ -99,32 +99,66 @@ public class View extends JFrame {
             g2.drawLine(ox, 0, ox, oy * 2);
             g2.drawLine(0, oy, ox * 2, oy);
 
-            // --- 2. DRAW THE BALLS ---
-            g2.setColor(Color.BLUE);
-            for (BallState b : controller.getStateSnapshot()) {
-                int x = (int) b.pos().x();
-                int y = (int) b.pos().y();
-                int r = (int) b.radius();
 
-                g2.fillOval(x - r, y - r, r * 2, r * 2);
+            // Draw balls
+            for (BallState b : controller.getStateSnapshot()) {
+                this.drawBall(b, g2, null);
             }
 
-            // Draw the Users' ball
+            // Draw User's ball
             BallState userBall = controller.getUserBallState();
-            int x = (int) userBall.pos().x();
-            int y = (int) userBall.pos().y();
-            int r = (int) userBall.radius();
+            // Overdraw the user ball with its specific label
+            if (userBall != null) {
+                this.drawBall(userBall, g2, "H");
+            }
 
-            g2.fillOval(x - r, y - r, r * 2, r * 2);
-
-            // Draw the Npc's ball
+            // Draw NPC's ball
             BallState npcBall = controller.getNPCBallState();
-            int x1 = (int) npcBall.pos().x();
-            int y2 = (int) npcBall.pos().y();
-            int r3 = (int) npcBall.radius();
+            if (npcBall != null) {
+                this.drawBall(npcBall, g2, "B");
+            }
 
+        }
+
+        /**
+         * Draws a ball with a white fill, black border, and an optional label.
+         */
+        private void drawBall(BallState ball, Graphics2D g2, String label) {
+            int x = (int) ball.pos().x();
+            int y = (int) ball.pos().y();
+            int r = (int) ball.radius();
+
+            // --- A. Draw the Fill (White) ---
+            g2.setColor(Color.WHITE);
             g2.fillOval(x - r, y - r, r * 2, r * 2);
 
+            // --- B. Draw the Border (Black) ---
+            g2.setColor(Color.BLACK);
+            // Use a slightly thicker stroke for visibility
+            g2.setStroke(new BasicStroke(2));
+            g2.drawOval(x - r, y - r, r * 2, r * 2);
+
+            // --- C. Draw the Label (If provided) ---
+            if (label != null && !label.isEmpty()) {
+                g2.setColor(Color.BLACK); // Label color
+
+                // Set a bold, readable font. Adjust size based on ball radius.
+                int fontSize = (int) (r * 1.5); // Example scaling
+                g2.setFont(new Font("Arial", Font.BOLD, fontSize));
+
+                // Center the text perfectly
+                FontMetrics fm = g2.getFontMetrics();
+                int textWidth = fm.stringWidth(label);
+                int textHeight = fm.getAscent(); // Height from baseline up
+
+                // We center the text relative to the ball's center (x, y)
+                int labelX = x - (textWidth / 2);
+                // Descent is the part below the baseline (like in 'g' or 'y')
+                // We add half the ascent to center the bulk of the letter
+                int labelY = y + (textHeight / 2) - fm.getDescent() / 2;
+
+                g2.drawString(label, labelX, labelY);
+            }
         }
 
     }
