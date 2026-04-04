@@ -15,17 +15,8 @@ public class Poool {
     public static void main(String[] args) {
         // Setup the World
         Board board = new Board(800, 600);
-        PhysicsImpl physics = new PhysicsImpl(board);
+        PhysicsImpl physics = new PhysicsImpl(board, 5, 5);
 
-        // Add some random target balls
-        Random rand = new Random();
-        for (int i = 0; i < 25; i++) {
-            physics.addBall(new Ball(
-                    new P2d(rand.nextInt(700) + 50, rand.nextInt(500) + 50),
-                    15, 1.0,
-                    new V2d(rand.nextInt(300) - 50, rand.nextInt(300) - 50)
-            ));
-        }
 
         // Start the Engines
         ControllerImpl controller = new ControllerImpl(physics);

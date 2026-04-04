@@ -1,15 +1,28 @@
 package pcd.poool.model;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 public class Board {
-
+        private final int NUM_BALLS = 100;
         private final double width;
         private final double height;
+        private final List<Ball> balls;
 
         public Board(double width, double height) {
             this.width = width;
             this.height = height;
+            this.balls = new ArrayList<>();
+
+            Random rand = new Random();
+            for (int i = 0; i < NUM_BALLS; i++) {
+                this.balls.add(new Ball(
+                        new P2d(rand.nextInt(700) + 50, rand.nextInt(500) + 50),
+                        3, 1.0,
+                        new V2d(rand.nextInt(300) - 50, rand.nextInt(300) - 50)
+                ));
+            }
         }
 
         public double getWidth() { return width; }
@@ -18,6 +31,10 @@ public class Board {
         // Returns a Boundary object that your Ball class expects
         public Boundary getBounds() {
             return new Boundary(0, 0, width, height);
+        }
+
+        public List<Ball> getBalls() {
+            return this.balls.stream().toList();
         }
 
 }
