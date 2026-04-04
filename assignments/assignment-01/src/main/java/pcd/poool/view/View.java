@@ -99,6 +99,18 @@ public class View extends JFrame {
             g2.drawLine(ox, 0, ox, oy * 2);
             g2.drawLine(0, oy, ox * 2, oy);
 
+            // Draw the scores
+            g2.setFont(new Font("Arial", Font.BOLD, 48));
+            g2.setColor(Color.BLUE); // Semi-transparent white
+
+            // Position them like a scoreboard on the background
+            String scoreText = 0 + "  -  " + 0;
+
+            // Center the scoreboard at the top
+            FontMetrics fm = g2.getFontMetrics();
+            int x = (getWidth() - fm.stringWidth(scoreText)) / 2;
+            g2.drawString(scoreText, x, getHeight() * 2/3);
+
 
             // Draw balls
             for (BallState b : controller.getStateSnapshot()) {
@@ -117,6 +129,13 @@ public class View extends JFrame {
             if (npcBall != null) {
                 this.drawBall(npcBall, g2, "B");
             }
+
+            // --- 6. DRAW FPS COUNTER ---
+            g2.setFont(new Font("Monospaced", Font.PLAIN, 14));
+            g2.setColor(Color.GREEN);
+
+            String fpsText = "FPS: " + controller.getCurrentFPS();
+            g2.drawString(fpsText, getWidth() - 80, 20);
 
         }
 

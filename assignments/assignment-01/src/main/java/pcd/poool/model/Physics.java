@@ -40,4 +40,8 @@ public interface Physics {
     void resolveRowCollisions(int r);
 
     void updateUserVelocity(double vx, double vy);
+
+    void setFPS(int fps);
+
+    int getCurrentFPS();
 }

@@ -48,7 +48,7 @@ public class PhysicsImpl implements Physics{
         this.userBall = new UserBall(
                 new P2d(300, 300),
                 30,
-                10.0,
+                100.0,
                 new V2d(10, 10)
         );
     }
@@ -56,7 +56,7 @@ public class PhysicsImpl implements Physics{
     @Override
     public void computeState(long dt) {
         this.userBall.updateState(dt, board);
-        int nThreads = 1;//Runtime.getRuntime().availableProcessors();
+        int nThreads = Runtime.getRuntime().availableProcessors();
         final PhaseLatch barrier = new PhaseLatch(nThreads);
         final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
 
@@ -239,5 +239,15 @@ public class PhysicsImpl implements Physics{
                 cells[r][c].reset();
             }
         }
+    }
+
+    private volatile int currentFPS;
+
+    public int getCurrentFPS() {
+        return currentFPS;
+    }
+
+    public void setFPS(int fps) {
+        this.currentFPS = fps;
     }
 }

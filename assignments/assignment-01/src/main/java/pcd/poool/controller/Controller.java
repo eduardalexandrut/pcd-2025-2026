@@ -24,4 +24,6 @@ public interface Controller {
      * @return a snapshot DTO of all the balls' state.
      */
     List<BallState> getStateSnapshot();
+
+    String getCurrentFPS();
 }

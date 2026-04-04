@@ -57,4 +57,9 @@ public class ControllerImpl extends Thread implements Controller {
     public List<BallState> getStateSnapshot() {
         return this.model.getStateSnapshot();
     }
+
+    @Override
+    public String getCurrentFPS() {
+        return String.valueOf(this.model.getCurrentFPS());
+    }
 }

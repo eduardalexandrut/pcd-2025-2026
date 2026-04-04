@@ -14,7 +14,7 @@ public class MoveUserCmd implements Cmd {
     @Override
     public void execute(Physics model) {
 
-        double speed = 50.0;
+        double speed = 200.0;
         double vx = 0, vy = 0;
 
         if (!key.startsWith("STOP_")) {
