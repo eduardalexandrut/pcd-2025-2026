@@ -117,6 +117,14 @@ public class View extends JFrame {
 
             g2.fillOval(x - r, y - r, r * 2, r * 2);
 
+            // Draw the Npc's ball
+            BallState npcBall = controller.getNPCBallState();
+            int x1 = (int) npcBall.pos().x();
+            int y2 = (int) npcBall.pos().y();
+            int r3 = (int) npcBall.radius();
+
+            g2.fillOval(x - r, y - r, r * 2, r * 2);
+
         }
 
     }

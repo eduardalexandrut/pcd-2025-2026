@@ -50,7 +50,7 @@ public class ControllerImpl extends Thread implements Controller {
 
     @Override
     public BallState getNPCBallState() {
-        return null;
+        return this.model.getNPCBallState();
     }
 
     @Override

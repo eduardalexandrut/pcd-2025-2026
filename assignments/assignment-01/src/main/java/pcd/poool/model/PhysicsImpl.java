@@ -10,6 +10,8 @@ public class PhysicsImpl implements Physics{
     private final Board board;
     private Cell[][] cells;
     private UserBall userBall;
+    private Ball npcBall;
+    private NpcThread npcBrain;
     private final int rows, cols;
     private final double cellWidth, cellHeight;
 
@@ -30,6 +32,16 @@ public class PhysicsImpl implements Physics{
                 cellId = cellId + 1;
             }
         }
+
+        this.npcBall = new Ball(
+                new P2d(300, 300),
+                30,
+                10.0,
+                new V2d(10, 10)
+        );
+        this.transferToCorrectCell(this.npcBall);
+
+        this.npcBrain = new NpcThread(npcBall);
 
         this.syncBoard(board);
 
@@ -180,7 +192,7 @@ public class PhysicsImpl implements Physics{
 
     @Override
     public BallState getNPCBallState() {
-        return null;
+        return BallState.fromBall(this.npcBall);
     }
 
     @Override
@@ -206,6 +218,7 @@ public class PhysicsImpl implements Physics{
 
 
     private void syncBoard(final Board board) {
+        this.npcBrain.start();
 
         for (final Ball ball : board.getBalls()) {
             int r = (int) (ball.getPos().y() / this.cellHeight);
