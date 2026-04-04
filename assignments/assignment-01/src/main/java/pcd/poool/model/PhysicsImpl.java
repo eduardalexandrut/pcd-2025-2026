@@ -9,6 +9,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class PhysicsImpl implements Physics{
     private final Board board;
     private Cell[][] cells;
+    private UserBall userBall;
     private final int rows, cols;
     private final double cellWidth, cellHeight;
 
@@ -31,6 +32,13 @@ public class PhysicsImpl implements Physics{
         }
 
         this.syncBoard(board);
+
+        this.userBall = new UserBall(
+                new P2d(300, 300),
+                30,
+                10.0,
+                new V2d(10, 10)
+        );
     }
 
     @Override
@@ -107,6 +115,17 @@ public class PhysicsImpl implements Physics{
                     multiLockResolver(r, c, nr, nc);
                 }
             }
+
+            // Handle collision with User ball
+            current.lock();
+            try {
+                for (Ball b : current.getBalls()) {
+                    // Check and resolve the collision "instantly" in this frame
+                    Ball.resolveCollision(this.userBall, b);
+                }
+            } finally {
+                current.unlock();
+            }
         }
     }
 
@@ -150,7 +169,7 @@ public class PhysicsImpl implements Physics{
 
     @Override
     public BallState getUserBallState() {
-        return null;
+        return BallState.fromBall(this.userBall);
     }
 
     @Override

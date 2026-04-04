@@ -3,6 +3,7 @@ package pcd.poool.view;
 import pcd.poool.controller.Controller;
 import pcd.poool.model.BallState;
 import pcd.poool.model.Physics;
+import pcd.poool.model.UserBall;
 
 import javax.swing.*;
 import java.awt.*;
@@ -95,11 +96,16 @@ public class View extends JFrame {
                 int y = (int) b.pos().y();
                 int r = (int) b.radius();
 
-                // Draw relative to the center (ox, oy)
-                // OR draw using raw coordinates.
-                // Since Main uses (400, 300), let's draw raw:
                 g2.fillOval(x - r, y - r, r * 2, r * 2);
             }
+
+            // Draw the Users' ball
+            BallState userBall = controller.getUserBallState();
+            int x = (int) userBall.pos().x();
+            int y = (int) userBall.pos().y();
+            int r = (int) userBall.radius();
+
+            g2.fillOval(x - r, y - r, r * 2, r * 2);
 
         }
 

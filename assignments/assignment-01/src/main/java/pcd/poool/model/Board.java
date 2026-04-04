@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 public class Board {
-        private final int NUM_BALLS = 1000;
+        private final int NUM_BALLS = 100;
         private final double width;
         private final double height;
         private final List<Ball> balls;

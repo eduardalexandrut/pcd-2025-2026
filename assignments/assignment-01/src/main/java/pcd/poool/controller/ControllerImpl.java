@@ -45,7 +45,7 @@ public class ControllerImpl extends Thread implements Controller {
 
     @Override
     public BallState getUserBallState() {
-        return null;
+        return this.model.getUserBallState();
     }
 
     @Override
