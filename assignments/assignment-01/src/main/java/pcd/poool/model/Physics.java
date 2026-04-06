@@ -1,5 +1,6 @@
 package pcd.poool.model;
 
+import pcd.poool.model.PhysicsImpl.GameState;
 import java.util.List;
 
 public interface Physics {
@@ -66,4 +67,8 @@ public interface Physics {
     int getUserScore();
 
     int getNPCScore();
+
+    GameState getGameState();
+
+    void setGameState(GameState gameState);
 }

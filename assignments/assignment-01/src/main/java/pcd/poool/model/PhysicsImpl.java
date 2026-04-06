@@ -5,6 +5,14 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PhysicsImpl implements Physics{
+    public enum GameState {
+        RUNNING,
+        USER_WON,
+        NPC_WON,
+        DRAW,
+        STOPPED
+    }
+
     private final Board board;
     private Cell[][] cells;
     private UserBall userBall;
@@ -16,6 +24,7 @@ public class PhysicsImpl implements Physics{
     private final AtomicInteger npcScore;
     private final Hole leftHole;
     private final Hole rightHole;
+    private final GameState gameState;
 
     public PhysicsImpl(Board board, int rows, int cols) {
         this.board = board;
@@ -57,6 +66,8 @@ public class PhysicsImpl implements Physics{
                 new V2d(10, 10)
         );
         this.transferToCorrectCell(this.userBall);
+
+        this.gameState = GameState.RUNNING;
 
         this.syncBoard(board);
     }
