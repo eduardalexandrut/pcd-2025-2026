@@ -3,6 +3,7 @@ package pcd.poool.model;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 
 public class PhysicsImpl implements Physics{
     public enum GameState {
@@ -24,7 +25,7 @@ public class PhysicsImpl implements Physics{
     private final AtomicInteger npcScore;
     private final Hole leftHole;
     private final Hole rightHole;
-    private final GameState gameState;
+    private AtomicReference<GameState> gameState = new AtomicReference<>();
 
     public PhysicsImpl(Board board, int rows, int cols) {
         this.board = board;
@@ -67,7 +68,7 @@ public class PhysicsImpl implements Physics{
         );
         this.transferToCorrectCell(this.userBall);
 
-        this.gameState = GameState.RUNNING;
+        this.gameState.set(GameState.RUNNING);
 
         this.syncBoard(board);
     }
@@ -307,6 +308,16 @@ public class PhysicsImpl implements Physics{
     @Override
     public int getNPCScore() {
         return this.npcScore.get();
+    }
+
+    @Override
+    public GameState getGameState() {
+        return this.gameState.get();
+    }
+
+    @Override
+    public void setGameState(GameState gameState) {
+        this.gameState.set(gameState);
     }
 
     public void setFPS(int fps) {

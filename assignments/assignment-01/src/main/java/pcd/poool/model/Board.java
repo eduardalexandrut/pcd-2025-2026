@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.Random;
 
 public class Board {
-        private final int NUM_BALLS = 10;
+        private final int NUM_BALLS = 1;
         private final double width;
         private final double height;
         private final List<Ball> balls;
@@ -19,7 +19,7 @@ public class Board {
             for (int i = 0; i < NUM_BALLS; i++) {
                 this.balls.add(new Ball(
                         new P2d(rand.nextInt(700) + 50, rand.nextInt(500) + 50),
-                        30, 1.0,
+                        10, 1.0,
                         new V2d(0, 0)
                 ));
             }

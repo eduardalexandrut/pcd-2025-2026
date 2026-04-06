@@ -14,7 +14,7 @@ public class PhysicsThread extends Thread {
         long lastTime = System.nanoTime();
         double fps = 0;
 
-        while (!isInterrupted()) {
+        while (!isInterrupted() && this.model.getGameState() == PhysicsImpl.GameState.RUNNING) {
             long now = System.nanoTime();
             // Calculate the time elapsed in nanoseconds
             long updateTime = now - lastTime;
@@ -30,6 +30,8 @@ public class PhysicsThread extends Thread {
             // 1. Update the math (Move balls, check collisions)
             model.computeState(period);
 
+            checkEndGame();
+
             model.setFPS((int) fps);
 
             // 2. Regulate the speed so it doesn't run too fast
@@ -40,6 +42,26 @@ public class PhysicsThread extends Thread {
                 Thread.sleep(sleep);
             } catch (InterruptedException e) {
                 break;
+            }
+        }
+
+        System.out.println("Simulation Ended. Final State: " + model.getGameState());
+    }
+
+    private void checkEndGame() {
+        if (this.model.getGameState() != PhysicsImpl.GameState.RUNNING) {
+            return;
+        }
+        if (this.model.getStateSnapshot().size() <= 2) {
+            final int userScore = this.model.getUserScore();
+            final int npcScore = this.model.getNPCScore();
+
+            if (userScore > npcScore) {
+                this.model.setGameState(PhysicsImpl.GameState.USER_WON);
+            } else if (userScore < npcScore) {
+                this.model.setGameState(PhysicsImpl.GameState.NPC_WON);
+            } else {
+                this.model.setGameState(PhysicsImpl.GameState.DRAW);
             }
         }
     }

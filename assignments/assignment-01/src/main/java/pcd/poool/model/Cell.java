@@ -39,10 +39,16 @@ public class Cell {
 
                 // Check if the ball is inside a hole
                 if (model.getLeftHole().contains(b) || model.getRightHole().contains(b)) {
-                    if (b.isScorableBy(Ball.CHARACTERS.HUMAN)) {
-                        model.incrementUserScore();
-                    } else if (b.isScorableBy(Ball.CHARACTERS.NPC)) {
-                        model.incrementNpcScore();
+                    if (b.equals(model.getUserBall())) {
+                        model.setGameState(PhysicsImpl.GameState.NPC_WON);
+                    } else if (b.equals(model.getNPCBall())) {
+                        model.setGameState(PhysicsImpl.GameState.USER_WON);
+                    } else {
+                        if (b.isScorableBy(Ball.CHARACTERS.HUMAN)) {
+                            model.incrementUserScore();
+                        } else if (b.isScorableBy(Ball.CHARACTERS.NPC)) {
+                            model.incrementNpcScore();
+                        }
                     }
                     it.remove(); // Ball is gone
                     continue;
