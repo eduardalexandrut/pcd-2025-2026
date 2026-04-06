@@ -11,34 +11,58 @@ public class Cell {
     private final List<Ball> balls = new ArrayList<>();
     private final ReentrantLock lock = new ReentrantLock();
     private final Condition stateChanged = lock.newCondition();
+    private final Physics model;
 
     // State tracking for the monitor
     private boolean processed = false;
 
-    public Cell(int id) { this.id = id; }
+    public Cell(int id, Physics model) {
+        this.id = id;
+        this.model = model;
+    }
 
     /**
      * Entry point for the Monitor: Update movement.
      */
-    public List<Ball> updateMovement(long dt, Board board, double cellW, double cellH, int r, int c) {
+    public List<Ball> updateMovement(long dt, int r, int c) {
         lock.lock();
         try {
+            while (processed) { // Wait if already processed
+                stateChanged.await();
+            }
+
             List<Ball> exited = new ArrayList<>();
             Iterator<Ball> it = balls.iterator();
             while (it.hasNext()) {
                 Ball b = it.next();
-                b.updateState(dt, board);
+                b.updateState(dt, this.model.getBoard());
 
-                int nr = (int) (b.getPos().y() / cellH);
-                int nc = (int) (b.getPos().x() / cellW);
+                // Check if the ball is inside a hole
+                if (model.getLeftHole().contains(b) || model.getRightHole().contains(b)) {
+                    if (b.isScorableBy(Ball.CHARACTERS.HUMAN)) {
+                        model.incrementUserScore();
+                    } else if (b.isScorableBy(Ball.CHARACTERS.NPC)) {
+                        model.incrementNpcScore();
+                    }
+                    it.remove(); // Ball is gone
+                    continue;
+                }
+
+                int nr = (int) (b.getPos().y() / model.getCellH());
+                int nc = (int) (b.getPos().x() / model.getCellW());
+
                 if (nr != r || nc != c) {
                     exited.add(b);
                     it.remove();
                 }
             }
+
             processed = true;
-            stateChanged.signalAll(); // Tell waiting threads movement is done
+            stateChanged.signalAll();
             return exited;
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            return new ArrayList<>();
         } finally {
             lock.unlock();
         }
@@ -50,8 +74,14 @@ public class Cell {
         // Handle internal collisions
         try {
             for (int i = 0; i < this.balls.size(); i++) {
+                final Ball b1 = this.balls.get(i);
                 for (int j = i + 1; j < this.balls.size(); j++) {
-                    Ball.resolveCollision(this.balls.get(i), this.balls.get(j));
+                    final Ball b2 = this.balls.get(j);
+
+                    if (Ball.areColliding(b1, b2)) {
+                        this.updateToucher(b1, b2);
+                        Ball.resolveCollision(b1, b2);
+                    }
                 }
             }
         } finally {
@@ -59,19 +89,33 @@ public class Cell {
         }
     }
 
-    /**
-     * Barrier Logic: Wait until this cell has finished its movement phase.
-     */
-    public void waitProcessed() throws InterruptedException {
-        lock.lock();
-        try {
-            while (!processed) {
-                stateChanged.await();
-            }
-        } finally {
-            lock.unlock();
+    private void updateToucher(Ball b1, Ball b2) {
+        // If b1 is the Human Player, b2 is now "Touched by Human"
+        if (b1.equals(model.getUserBall())) {
+            b2.setLastToucher(Ball.CHARACTERS.HUMAN);
+            b2.setRemainingBounces(1);
+        }
+        // If b2 is the Human Player, b1 is now "Touched by Human"
+        else if (b2.equals(model.getUserBall())) {
+            b1.setLastToucher(Ball.CHARACTERS.HUMAN);
+            b1.setRemainingBounces(1);
+        }
+        else if (b1.equals(model.getNPCBall())) {
+            b2.setLastToucher(Ball.CHARACTERS.NPC);
+            b2.setRemainingBounces(1);
+        }
+        // If b2 is the Human Player, b1 is now "Touched by Human"
+        else if (b2.equals(model.getNPCBall())) {
+            b1.setLastToucher(Ball.CHARACTERS.NPC);
+            b1.setRemainingBounces(1);
+        }
+        // If two normal balls hit each other, they BOTH consume their "Direct Hit" status
+        else {
+            b1.consumeRemainingBounce();
+            b2.consumeRemainingBounce();
         }
     }
+
 
     public void addBall(Ball b) {
         lock.lock();

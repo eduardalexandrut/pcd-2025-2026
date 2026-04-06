@@ -17,13 +17,13 @@ public class PhysicsWorker extends Thread {
     @Override
     public void run() {
         for (int r = startRow; r <= endRow; r++) {
-            this.physics.updateRowMovement(r, dt);
+            this.physics.resolveRowCollisions(r);
         }
 
         barrier.awaitPhase();
 
         for (int r = startRow; r <= endRow; r++) {
-            this.physics.resolveRowCollisions(r);
+            this.physics.updateRowMovement(r, dt);
         }
     }
 }

@@ -31,4 +31,8 @@ public interface Controller {
     Hole getLeftHole();
 
     Hole getRightHole();
+
+    String getUserScore();
+
+    String getNPCScore();
 }

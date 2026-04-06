@@ -105,7 +105,7 @@ public class View extends JFrame {
             g2.setColor(Color.BLUE); // Semi-transparent white
 
             // Position them like a scoreboard on the background
-            String scoreText = 0 + "  -  " + 0;
+            String scoreText = "User: " + controller.getUserScore() + "  -  " + "NPC: " + controller.getNPCScore();
 
             // Center the scoreboard at the top
             FontMetrics fm = g2.getFontMetrics();

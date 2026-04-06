@@ -73,4 +73,14 @@ public class ControllerImpl extends Thread implements Controller {
     public Hole getRightHole() {
         return this.model.getRightHole();
     }
+
+    @Override
+    public String getUserScore() {
+        return String.valueOf(this.model.getUserScore());
+    }
+
+    @Override
+    public String getNPCScore() {
+        return String.valueOf(this.model.getNPCScore());
+    }
 }

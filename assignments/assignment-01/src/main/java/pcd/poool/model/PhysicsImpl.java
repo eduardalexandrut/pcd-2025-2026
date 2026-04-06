@@ -1,10 +1,7 @@
 package pcd.poool.model;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Iterator;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PhysicsImpl implements Physics{
@@ -33,7 +30,7 @@ public class PhysicsImpl implements Physics{
         int cellId = 0;
         for (int i = 0; i < rows; i++) {
             for (int j = 0; j < cols; j++) {
-                this.cells[i][j] = new Cell(cellId);
+                this.cells[i][j] = new Cell(cellId, this);
                 cellId = cellId + 1;
             }
         }
@@ -51,10 +48,7 @@ public class PhysicsImpl implements Physics{
                 new V2d(10, 10)
         );
         this.transferToCorrectCell(this.npcBall);
-
         this.npcBrain = new NpcThread(npcBall);
-
-        this.syncBoard(board);
 
         this.userBall = new UserBall(
                 new P2d(300, 300),
@@ -62,11 +56,13 @@ public class PhysicsImpl implements Physics{
                 100.0,
                 new V2d(10, 10)
         );
+        this.transferToCorrectCell(this.userBall);
+
+        this.syncBoard(board);
     }
 
     @Override
     public void computeState(long dt) {
-        this.userBall.updateState(dt, board);
         int nThreads = Runtime.getRuntime().availableProcessors();
         final PhaseLatch barrier = new PhaseLatch(nThreads);
         final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
@@ -111,7 +107,7 @@ public class PhysicsImpl implements Physics{
     @Override
     public void updateRowMovement(int r, long dt) {
         for (int c = 0; c < cols; c++) {
-            List<Ball> leavers = cells[r][c].updateMovement(dt, board, cellWidth, cellHeight, r, c);
+            List<Ball> leavers = cells[r][c].updateMovement(dt, r, c);
 
             for (Ball b : leavers) {
                 transferToCorrectCell(b);
@@ -138,17 +134,6 @@ public class PhysicsImpl implements Physics{
                 if (isValid(nr, nc)) {
                     multiLockResolver(r, c, nr, nc);
                 }
-            }
-
-            // Handle collision with User ball
-            current.lock();
-            try {
-                for (Ball b : current.getBalls()) {
-                    // Check and resolve the collision "instantly" in this frame
-                    Ball.resolveCollision(this.userBall, b);
-                }
-            } finally {
-                current.unlock();
             }
         }
     }
@@ -266,6 +251,51 @@ public class PhysicsImpl implements Physics{
     @Override
     public Hole getRightHole() {
         return this.rightHole;
+    }
+
+    @Override
+    public Board getBoard() {
+        return this.board;
+    }
+
+    @Override
+    public double getCellH() {
+        return this.cellHeight;
+    }
+
+    @Override
+    public double getCellW() {
+        return this.cellWidth;
+    }
+
+    @Override
+    public void incrementUserScore() {
+        this.userScore.set(this.userScore.get() + 1);
+    }
+
+    @Override
+    public void incrementNpcScore() {
+        this.npcScore.set(this.npcScore.get() + 1);
+    }
+
+    @Override
+    public Ball getUserBall() {
+        return this.userBall;
+    }
+
+    @Override
+    public Ball getNPCBall() {
+        return this.npcBall;
+    }
+
+    @Override
+    public int getUserScore() {
+        return this.userScore.get();
+    }
+
+    @Override
+    public int getNPCScore() {
+        return this.npcScore.get();
     }
 
     public void setFPS(int fps) {

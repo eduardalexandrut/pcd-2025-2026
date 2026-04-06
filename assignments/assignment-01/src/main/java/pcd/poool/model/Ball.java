@@ -17,7 +17,6 @@ public class Ball {
     
     private static double FRICTION_FACTOR = 50; 	/* 0 minimum */
     private static double RESTITUTION_FACTOR = 1;
-    private static int DEFAULT_BOUNCES = 1;
 
     public Ball(P2d pos, double radius, double mass, V2d vel){
        this.pos = pos;
@@ -25,7 +24,7 @@ public class Ball {
        this.mass = mass;
        this.vel = vel;
        this.lastToucher = CHARACTERS.NONE;
-       this.remainingBounces = DEFAULT_BOUNCES;
+       this.remainingBounces = 0;
     }
 
     public void updateState(long dt, Board ctx){
@@ -69,6 +68,19 @@ public class Ball {
         }
     }
 
+    public static boolean areColliding(Ball b1, Ball b2) {
+        double dx   = b1.pos.x() - b2.pos.x();
+        double dy   = b1.pos.y() - b2.pos.y();
+        double dist = Math.hypot(dx, dy);
+        double minD = b1.radius + b2.radius;
+
+        /*
+         * There is a collision if the distance between the two balls is less than the sum of the radii
+         *
+         */
+        return (dist < minD && dist > 1e-6);
+    }
+
     /**
      * 
      * Resolving collision between 2 balls, updating their position and velocity
@@ -77,23 +89,15 @@ public class Ball {
      * @param b
      */
     public static void resolveCollision(Ball a, Ball b) {
-        
-    	/* check if there is a collision */
-    	
-    	/* compute dv = b.pos - a.pos vector */
 
-    	double dx   = b.pos.x() - a.pos.x();
-        double dy   = b.pos.y() - a.pos.y();
-        double dist = Math.hypot(dx, dy);
-        double minD = a.radius + b.radius;
-        
-        /* 
-         * There is a collision if the distance between the two balls is less than the sum of the radii 
-         * 
-         */
-        if (dist < minD && dist > 1e-6)  {
+        if (areColliding(a, b)) {
+            double dx   = b.pos.x() - a.pos.x();
+            double dy   = b.pos.y() - a.pos.y();
+            double dist = Math.hypot(dx, dy);
+            double minD = a.radius + b.radius;
 
-	        /* 
+
+            /*
 	         * Collision case - what to do:
 	         * 
 	         * 1) solve overlaps, moving balls 
@@ -141,6 +145,7 @@ public class Ball {
 	        	a.vel = new V2d(a.vel.x() - (imp / a.mass) * nx, a.vel.y() - (imp / a.mass) * ny);
 	        	b.vel = new V2d(b.vel.x() + (imp / b.mass) * nx, b.vel.y() + (imp / b.mass) * ny);
 	        }
+
         }
     }
 
@@ -177,4 +182,14 @@ public class Ball {
         this.lastToucher = lastToucher;
     }
 
+    public void consumeRemainingBounce() {
+        if (this.remainingBounces > 0) {
+            this.remainingBounces = this.remainingBounces - 1;
+        }
+    }
+
+
+    public boolean isScorableBy(CHARACTERS characters) {
+        return characters.equals(lastToucher) && this.remainingBounces > 0;
+    }
 }

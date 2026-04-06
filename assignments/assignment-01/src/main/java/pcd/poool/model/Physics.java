@@ -48,4 +48,22 @@ public interface Physics {
     Hole getLeftHole();
 
     Hole getRightHole();
+
+    Board getBoard();
+
+    double getCellH();
+
+    double getCellW();
+
+    void incrementUserScore();
+
+    void incrementNpcScore();
+
+    Ball getUserBall();
+
+    Ball getNPCBall();
+
+    int getUserScore();
+
+    int getNPCScore();
 }
