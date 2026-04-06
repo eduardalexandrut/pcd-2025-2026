@@ -1,6 +1,7 @@
 package pcd.poool.controller;
 
 import pcd.poool.model.BallState;
+import pcd.poool.model.Hole;
 import pcd.poool.model.Physics;
 import pcd.sketch02.util.BoundedBuffer;
 import pcd.sketch02.util.BoundedBufferImpl;
@@ -61,5 +62,15 @@ public class ControllerImpl extends Thread implements Controller {
     @Override
     public String getCurrentFPS() {
         return String.valueOf(this.model.getCurrentFPS());
+    }
+
+    @Override
+    public Hole getLeftHole() {
+        return this.model.getLeftHole();
+    }
+
+    @Override
+    public Hole getRightHole() {
+        return this.model.getRightHole();
     }
 }

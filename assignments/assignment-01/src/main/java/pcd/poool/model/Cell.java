@@ -73,15 +73,6 @@ public class Cell {
         }
     }
 
-    public void resetFrame() {
-        lock.lock();
-        try {
-            processed = false;
-        } finally {
-            lock.unlock();
-        }
-    }
-
     public void addBall(Ball b) {
         lock.lock();
         try { balls.add(b); } finally { lock.unlock(); }

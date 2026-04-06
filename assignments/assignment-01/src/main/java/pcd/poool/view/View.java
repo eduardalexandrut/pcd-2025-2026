@@ -2,6 +2,7 @@ package pcd.poool.view;
 
 import pcd.poool.controller.Controller;
 import pcd.poool.model.BallState;
+import pcd.poool.model.Hole;
 import pcd.poool.model.Physics;
 import pcd.poool.model.UserBall;
 
@@ -130,7 +131,17 @@ public class View extends JFrame {
                 this.drawBall(npcBall, g2, "B");
             }
 
-            // --- 6. DRAW FPS COUNTER ---
+            // Draw left and right holes
+            Hole leftHole = controller.getLeftHole();
+            Hole rightHole = controller.getRightHole();
+            if (leftHole != null) {
+                drawHole(leftHole, g2);
+            }
+            if (rightHole != null) {
+                drawHole(rightHole, g2);
+            }
+
+            // Draw FPS counter
             g2.setFont(new Font("Monospaced", Font.PLAIN, 14));
             g2.setColor(Color.GREEN);
 
@@ -178,6 +189,18 @@ public class View extends JFrame {
 
                 g2.drawString(label, labelX, labelY);
             }
+        }
+
+        private void drawHole(Hole hole, Graphics2D g) {
+            int x = (int) hole.position().x();
+            int y = (int) hole.position().y();
+            int r = (int) hole.radius();
+
+            g.setColor(Color.BLACK);
+            g.fillOval(x - r, y - r, r * 2, r * 2);
+
+            g.setStroke(new BasicStroke(2));
+            g.drawOval(x - r, y - r, r * 2, r * 2);
         }
 
     }

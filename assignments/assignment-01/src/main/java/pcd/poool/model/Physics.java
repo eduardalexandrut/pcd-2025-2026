@@ -44,4 +44,8 @@ public interface Physics {
     void setFPS(int fps);
 
     int getCurrentFPS();
+
+    Hole getLeftHole();
+
+    Hole getRightHole();
 }

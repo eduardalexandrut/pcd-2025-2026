@@ -1,27 +1,38 @@
 package pcd.poool.model;
 
 public class Ball {
+
+    public enum CHARACTERS {
+            NONE,
+            HUMAN,
+            NPC
+    }
     
     private P2d pos;
     private V2d vel;
     private double radius;
-    private double mass;   
+    private double mass;
+    private CHARACTERS lastToucher;
+    private int remainingBounces;
     
-    private static double FRICTION_FACTOR = 0.25; 	/* 0 minimum */
-    private static double RESTITUTION_FACTOR = 1; 
+    private static double FRICTION_FACTOR = 50; 	/* 0 minimum */
+    private static double RESTITUTION_FACTOR = 1;
+    private static int DEFAULT_BOUNCES = 1;
 
     public Ball(P2d pos, double radius, double mass, V2d vel){
        this.pos = pos;
        this.radius = radius;
        this.mass = mass;
        this.vel = vel;
+       this.lastToucher = CHARACTERS.NONE;
+       this.remainingBounces = DEFAULT_BOUNCES;
     }
 
     public void updateState(long dt, Board ctx){
         double speed = vel.abs();
         double dt_scaled = dt*0.001;
     	if (speed > 0.001) {
-            double dec    = FRICTION_FACTOR * dt_scaled;
+            double dec = FRICTION_FACTOR * dt_scaled;
             double factor = Math.max(0, speed - dec) / speed;
             vel = vel.mul(factor);
         } else {
@@ -148,6 +159,22 @@ public class Ball {
     
     public double getRadius() {
     	return radius;
+    }
+
+    public int getRemainingBounces() {
+    	return remainingBounces;
+    }
+
+    public void setRemainingBounces(int remainingBounces) {
+        this.remainingBounces = remainingBounces;
+    }
+
+    public CHARACTERS getLastToucher() {
+    	return lastToucher;
+    }
+
+    public void setLastToucher(CHARACTERS lastToucher) {
+        this.lastToucher = lastToucher;
     }
 
 }

@@ -5,6 +5,7 @@ import java.util.Arrays;
 import java.util.Iterator;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class PhysicsImpl implements Physics{
     private final Board board;
@@ -14,6 +15,10 @@ public class PhysicsImpl implements Physics{
     private NpcThread npcBrain;
     private final int rows, cols;
     private final double cellWidth, cellHeight;
+    private final AtomicInteger userScore;
+    private final AtomicInteger npcScore;
+    private final Hole leftHole;
+    private final Hole rightHole;
 
     public PhysicsImpl(Board board, int rows, int cols) {
         this.board = board;
@@ -32,6 +37,12 @@ public class PhysicsImpl implements Physics{
                 cellId = cellId + 1;
             }
         }
+
+        this.userScore = new AtomicInteger(0);
+        this.npcScore = new AtomicInteger(0);
+
+        this.leftHole = new Hole(new P2d(0,0), 100);
+        this.rightHole = new Hole(new P2d(board.getWidth(), 0), 100);
 
         this.npcBall = new Ball(
                 new P2d(300, 300),
@@ -245,6 +256,16 @@ public class PhysicsImpl implements Physics{
 
     public int getCurrentFPS() {
         return currentFPS;
+    }
+
+    @Override
+    public Hole getLeftHole() {
+        return this.leftHole;
+    }
+
+    @Override
+    public Hole getRightHole() {
+        return this.rightHole;
     }
 
     public void setFPS(int fps) {
