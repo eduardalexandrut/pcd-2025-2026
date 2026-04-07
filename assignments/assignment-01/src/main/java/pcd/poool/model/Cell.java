@@ -10,15 +10,43 @@ public class Cell {
     private final int id;
     private final List<Ball> balls = new ArrayList<>();
     private final ReentrantLock lock = new ReentrantLock();
-    private final Condition stateChanged = lock.newCondition();
+    private int pendingCollisionWorkers;
+    private final Condition collisionsComplete;
     private final Physics model;
-
-    // State tracking for the monitor
-    private boolean processed = false;
 
     public Cell(int id, Physics model) {
         this.id = id;
         this.model = model;
+        this.collisionsComplete = lock.newCondition();
+    }
+
+    // Called at frame start by the coordinator
+    public void initFrame(int expectedWorkers) {
+        lock.lock();
+        try {
+            this.pendingCollisionWorkers = expectedWorkers;
+        } finally { lock.unlock(); }
+    }
+
+    // Called by a worker when it has finished all collision work touching this cell
+    public void signalCollisionsDone() {
+        lock.lock();
+        try {
+            pendingCollisionWorkers--;
+            if (pendingCollisionWorkers == 0) {
+                collisionsComplete.signalAll();
+            }
+        } finally { lock.unlock(); }
+    }
+
+    // Called by the owning worker before updating movement — blocks until safe
+    public void awaitCollisionsComplete() throws InterruptedException {
+        lock.lock();
+        try {
+            while (pendingCollisionWorkers > 0) {
+                collisionsComplete.await();
+            }
+        } finally { lock.unlock(); }
     }
 
     /**
@@ -27,9 +55,6 @@ public class Cell {
     public List<Ball> updateMovement(long dt, int r, int c) {
         lock.lock();
         try {
-            while (processed) { // Wait if already processed
-                stateChanged.await();
-            }
 
             List<Ball> exited = new ArrayList<>();
             Iterator<Ball> it = balls.iterator();
@@ -63,12 +88,8 @@ public class Cell {
                 }
             }
 
-            processed = true;
-            stateChanged.signalAll();
             return exited;
-        } catch (InterruptedException e) {
-            Thread.currentThread().interrupt();
-            return new ArrayList<>();
+
         } finally {
             lock.unlock();
         }
@@ -128,12 +149,6 @@ public class Cell {
         try { balls.add(b); } finally { lock.unlock(); }
     }
 
-    public void reset() {
-        this.lock.lock();
-        try {
-            this.processed = false;
-        } finally { this.lock.unlock(); }
-    }
 
     public void lock() { lock.lock(); }
     public void unlock() { lock.unlock(); }

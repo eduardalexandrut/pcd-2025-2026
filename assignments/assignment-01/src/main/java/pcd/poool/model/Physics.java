@@ -74,4 +74,5 @@ public interface Physics {
 
     void setGameState(GameState gameState);
 
+    void signalCollisionsDoneForRow(int r);
 }

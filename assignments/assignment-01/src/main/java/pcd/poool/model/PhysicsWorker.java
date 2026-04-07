@@ -2,13 +2,11 @@ package pcd.poool.model;
 
 public class PhysicsWorker extends Thread {
     private final Physics physics;
-    private final PhaseLatch barrier;
     private final int startRow, endRow;
     private final long dt;
 
-    public PhysicsWorker(Physics physics, PhaseLatch barrier, int startRow, int endRow, long dt) {
+    public PhysicsWorker(Physics physics, int startRow, int endRow, long dt) {
         this.physics = physics;
-        this.barrier = barrier;
         this.startRow = startRow;
         this.endRow = endRow;
         this.dt = dt;
@@ -16,14 +14,17 @@ public class PhysicsWorker extends Thread {
 
     @Override
     public void run() {
+        // Phase 1: resolve collisions for my rows
         for (int r = startRow; r <= endRow; r++) {
-            this.physics.resolveRowCollisions(r);
+            physics.resolveRowCollisions(r);
+            // Signal all cells in row r AND row r+1 boundary that I'm done touching them
+            physics.signalCollisionsDoneForRow(r);
         }
 
-        barrier.awaitPhase();
-
+        // Phase 2: update movement — each cell blocks until all collision workers are done
         for (int r = startRow; r <= endRow; r++) {
-            this.physics.updateRowMovement(r, dt);
+            physics.updateRowMovement(r, dt);
         }
+
     }
 }

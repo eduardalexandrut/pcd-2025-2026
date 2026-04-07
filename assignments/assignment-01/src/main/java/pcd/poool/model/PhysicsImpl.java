@@ -76,16 +76,23 @@ public class PhysicsImpl implements Physics{
     @Override
     public void computeState(long dt) {
         int nThreads = Runtime.getRuntime().availableProcessors();
-        final PhaseLatch barrier = new PhaseLatch(nThreads);
         final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
 
         final int rowsPerThread = this.rows / nThreads;
+
+        // Initialize each cell's collision counter before spawning workers
+        for (int r = 0; r < rows; r++) {
+            int expected = (r == 0) ? 1 : 2;
+            for (int c = 0; c < cols; c++) {
+                cells[r][c].initFrame(expected);
+            }
+        }
 
         for (int i = 0; i < nThreads; i++) {
             int start = i * rowsPerThread;
             int end = (i == nThreads - 1) ? rows - 1 : (start + rowsPerThread - 1);
 
-            workers[i] = new PhysicsWorker(this, barrier, start, end, dt);
+            workers[i] = new PhysicsWorker(this, start, end, dt);
             workers[i].start();
         }
 
@@ -96,8 +103,6 @@ public class PhysicsImpl implements Physics{
                 Thread.currentThread().interrupt();
             }
         }
-
-        this.resetCells();
 
     }
 
@@ -119,10 +124,29 @@ public class PhysicsImpl implements Physics{
     @Override
     public void updateRowMovement(int r, long dt) {
         for (int c = 0; c < cols; c++) {
-            List<Ball> leavers = cells[r][c].updateMovement(dt, r, c);
+            try {
+                cells[r][c].awaitCollisionsComplete();
+                List<Ball> leavers = cells[r][c].updateMovement(dt, r, c);
 
-            for (Ball b : leavers) {
-                transferToCorrectCell(b);
+                for (Ball b : leavers) {
+                    transferToCorrectCell(b);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+    }
+
+    @Override
+    public void signalCollisionsDoneForRow(int r) {
+        // Signal all cells in my row
+        for (int c = 0; c < cols; c++) {
+            cells[r][c].signalCollisionsDone();
+        }
+        // Signal the boundary row below (if it exists)
+        if (r + 1 < rows) {
+            for (int c = 0; c < cols; c++) {
+                cells[r + 1][c].signalCollisionsDone();
             }
         }
     }
@@ -166,8 +190,11 @@ public class PhysicsImpl implements Physics{
         second.lock();
 
         try {
-            for (Ball ballA : cell1.getBalls()) {
-                for (Ball ballB : cell2.getBalls()) {
+            List<Ball> balls1 = new ArrayList<>(cell1.getBalls()); // snapshot
+            List<Ball> balls2 = new ArrayList<>(cell2.getBalls()); // snapshot
+
+            for (Ball ballA : balls1) {
+                for (Ball ballB : balls2) {
                     Ball.resolveCollision(ballA, ballB);
                 }
             }
@@ -237,15 +264,6 @@ public class PhysicsImpl implements Physics{
             c = Math.max(0, Math.min(c, cols - 1));
 
             this.cells[r][c].addBall(ball);
-        }
-    }
-
-
-    private void resetCells() {
-        for (int r = 0; r < rows; r++) {
-            for (int c = 0; c < cols; c++) {
-                cells[r][c].reset();
-            }
         }
     }
 
