@@ -5,34 +5,40 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class SimpleBarrier {
-    private int members;
-    private int arrivedMembers;
-    private Lock lock;
-    private Condition allArrived;
+
+    private final int members;
+    private int arrivedMembers = 0;
+    private int generation = 0;
+
+    private final Lock lock = new ReentrantLock();
+    private final Condition allArrived = lock.newCondition();
 
     public SimpleBarrier(int members) {
         this.members = members;
-        this.arrivedMembers = 0;
-        lock = new ReentrantLock();
-        allArrived = lock.newCondition();
     }
 
     public void await() {
         lock.lock();
-
         try {
-            this.arrivedMembers++;
+            int myGeneration = generation;
+
+            arrivedMembers++;
 
             if (arrivedMembers == members) {
-                this.arrivedMembers = 0;
+                generation++;          // next phase
+                arrivedMembers = 0;
                 allArrived.signalAll();
-            } else {
-                while (arrivedMembers != 0) {
-                    allArrived.await();
-                }
+                return;
             }
+
+            while (myGeneration == generation) {
+                allArrived.await();
+            }
+
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-        } finally { lock.unlock(); }
+        } finally {
+            lock.unlock();
+        }
     }
 }

@@ -26,6 +26,8 @@ public class PhysicsImpl implements Physics{
     private final Hole leftHole;
     private final Hole rightHole;
     private AtomicReference<GameState> gameState = new AtomicReference<>();
+    private SimpleBarrier barrier;
+    private PhysicsWorker[] workers;
 
     public PhysicsImpl(Board board, int rows, int cols) {
         this.board = board;
@@ -71,14 +73,26 @@ public class PhysicsImpl implements Physics{
         this.gameState.set(GameState.RUNNING);
 
         this.syncBoard(board);
+
+        int nThreads = Runtime.getRuntime().availableProcessors();
+        this.workers = new PhysicsWorker[nThreads];
+        final int rowsPerThread = this.rows / nThreads;
+
+        this.barrier = new SimpleBarrier(nThreads + 1);
+
+        // Init worker threads
+        for (int i = 0; i < nThreads; i++) {
+            int start = i * rowsPerThread;
+            int end = (i == nThreads - 1) ? rows - 1 : (start + rowsPerThread - 1);
+
+            workers[i] = new PhysicsWorker(this, start, end, barrier);
+            workers[i].start();
+        }
+
     }
 
     @Override
     public void computeState(long dt) {
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        final PhysicsWorker[] workers = new PhysicsWorker[nThreads];
-
-        final int rowsPerThread = this.rows / nThreads;
 
         // Initialize each cell's collision counter before spawning workers
         for (int r = 0; r < rows; r++) {
@@ -88,21 +102,12 @@ public class PhysicsImpl implements Physics{
             }
         }
 
-        for (int i = 0; i < nThreads; i++) {
-            int start = i * rowsPerThread;
-            int end = (i == nThreads - 1) ? rows - 1 : (start + rowsPerThread - 1);
-
-            workers[i] = new PhysicsWorker(this, start, end, dt);
-            workers[i].start();
-        }
-
         for (PhysicsWorker w : workers) {
-            try {
-                w.join();
-            } catch (InterruptedException e) {
-                Thread.currentThread().interrupt();
-            }
+            w.setDt(dt);
         }
+
+        barrier.await();
+        barrier.await();
 
     }
 

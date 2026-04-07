@@ -10,7 +10,7 @@ public class NpcThread extends Thread {
     @Override
     public void run() {
         while (!isInterrupted()) {
-            final V2d newVel = new V2d(Math.random() * 10, Math.random() * 10);
+            final V2d newVel = new V2d(Math.random() * 200, Math.random() * 200);
 
             this.npcBall.kick(newVel);
 

@@ -15,7 +15,7 @@ public class Poool {
     public static void main(String[] args) {
         // Setup the World
         Board board = new Board(800, 600);
-        PhysicsImpl physics = new PhysicsImpl(board, 10, 10);
+        PhysicsImpl physics = new PhysicsImpl(board, 2, 2);
 
 
         // Start the Engines
