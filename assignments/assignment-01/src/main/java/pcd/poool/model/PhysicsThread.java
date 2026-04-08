@@ -2,7 +2,7 @@ package pcd.poool.model;
 
 public class PhysicsThread extends Thread {
     private final Physics model;
-    private final long period = 20; // 20ms = 50 FPS
+    private final long period = 15; // 20ms = 50 FPS
 
     public PhysicsThread(Physics model) {
         this.model = model;

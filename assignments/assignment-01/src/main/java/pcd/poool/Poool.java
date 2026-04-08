@@ -14,8 +14,8 @@ public class Poool {
 
     public static void main(String[] args) {
         // Setup the World
-        Board board = new Board(800, 600);
-        PhysicsImpl physics = new PhysicsImpl(board, 2, 2);
+        Board board = new Board(1200, 1200);
+        Physics physics = new PhysicsExecutorImpl(board, 20, 20);
 
 
         // Start the Engines
@@ -27,7 +27,7 @@ public class Poool {
 
         // Open the Window
         SwingUtilities.invokeLater(() -> {
-            View view = new View(physics, controller, 800, 600);
+            View view = new View(physics, controller, 1200, 1200);
             view.setVisible(true);
         });
     }
