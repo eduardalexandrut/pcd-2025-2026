@@ -94,6 +94,21 @@ public abstract class AbstractPhysics implements Physics {
         }
     }
 
+    void syncBoard(final Board board) {
+        this.npcBrain.start();
+
+        for (final Ball ball : board.getBalls()) {
+            int r = (int) (ball.getPos().y() / this.cellHeight);
+            int c = (int)  (ball.getPos().x() / this.cellWidth);
+
+            // Boundary check
+            r = Math.max(0, Math.min(r, rows - 1));
+            c = Math.max(0, Math.min(c, cols - 1));
+
+            this.cells[r][c].addBall(ball);
+        }
+    }
+
     void transferToCorrectCell(Ball b) {
         // 1. Calculate the indices based on the ball's current position
         int r = (int) (b.getPos().y() / this.cellHeight);
