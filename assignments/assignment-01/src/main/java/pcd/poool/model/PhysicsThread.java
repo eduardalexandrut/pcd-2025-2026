@@ -14,7 +14,7 @@ public class PhysicsThread extends Thread {
         long lastTime = System.nanoTime();
         double fps = 0;
 
-        while (!isInterrupted() && this.model.getGameState() == PhysicsImpl.GameState.RUNNING) {
+        while (!isInterrupted() && this.model.getGameState() == MultiThreadPhysics.GameState.RUNNING) {
             long now = System.nanoTime();
             // Calculate the time elapsed in nanoseconds
             long updateTime = now - lastTime;
@@ -49,7 +49,7 @@ public class PhysicsThread extends Thread {
     }
 
     private void checkEndGame() {
-        if (this.model.getGameState() != PhysicsImpl.GameState.RUNNING) {
+        if (this.model.getGameState() != MultiThreadPhysics.GameState.RUNNING) {
             return;
         }
         if (this.model.getStateSnapshot().size() <= 2) {
@@ -57,11 +57,11 @@ public class PhysicsThread extends Thread {
             final int npcScore = this.model.getNPCScore();
 
             if (userScore > npcScore) {
-                this.model.setGameState(PhysicsImpl.GameState.USER_WON);
+                this.model.setGameState(MultiThreadPhysics.GameState.USER_WON);
             } else if (userScore < npcScore) {
-                this.model.setGameState(PhysicsImpl.GameState.NPC_WON);
+                this.model.setGameState(MultiThreadPhysics.GameState.NPC_WON);
             } else {
-                this.model.setGameState(PhysicsImpl.GameState.DRAW);
+                this.model.setGameState(MultiThreadPhysics.GameState.DRAW);
             }
         }
     }

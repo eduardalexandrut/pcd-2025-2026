@@ -1,8 +1,7 @@
 package pcd.poool.model;
 
-import pcd.poool.model.PhysicsImpl.GameState;
+import pcd.poool.model.MultiThreadPhysics.GameState;
 
-import java.util.Collection;
 import java.util.List;
 
 public interface Physics {

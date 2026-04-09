@@ -28,7 +28,7 @@ public class PhysicsExecutorImpl implements Physics {
     private final AtomicInteger npcScore;
     private final Hole leftHole;
     private final Hole rightHole;
-    private AtomicReference<PhysicsImpl.GameState> gameState = new AtomicReference<>();
+    private AtomicReference<MultiThreadPhysics.GameState> gameState = new AtomicReference<>();
     private final ExecutorService executor;
 
     public PhysicsExecutorImpl(Board board, int rows, int cols) {
@@ -72,7 +72,7 @@ public class PhysicsExecutorImpl implements Physics {
         );
         this.transferToCorrectCell(this.userBall);
 
-        this.gameState.set(PhysicsImpl.GameState.RUNNING);
+        this.gameState.set(MultiThreadPhysics.GameState.RUNNING);
 
         this.syncBoard(board);
 
@@ -358,12 +358,12 @@ public class PhysicsExecutorImpl implements Physics {
     }
 
     @Override
-    public PhysicsImpl.GameState getGameState() {
+    public MultiThreadPhysics.GameState getGameState() {
         return this.gameState.get();
     }
 
     @Override
-    public void setGameState(PhysicsImpl.GameState gameState) {
+    public void setGameState(MultiThreadPhysics.GameState gameState) {
         this.gameState.set(gameState);
     }
 

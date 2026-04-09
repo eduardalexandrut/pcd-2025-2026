@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
-public class PhysicsImpl implements Physics{
+public abstract class AbstractPhysics implements Physics {
     public enum GameState {
         RUNNING,
         USER_WON,
@@ -13,23 +13,21 @@ public class PhysicsImpl implements Physics{
         DRAW,
         STOPPED
     }
+    protected final Board board;
+    protected Cell[][] cells;
+    protected UserBall userBall;
+    protected Ball npcBall;
+    protected NpcThread npcBrain;
+    protected final int rows, cols;
+    protected final double cellWidth, cellHeight;
+    protected final AtomicInteger userScore;
+    protected final AtomicInteger npcScore;
+    protected final Hole leftHole;
+    protected final Hole rightHole;
+    protected AtomicReference<MultiThreadPhysics.GameState> gameState = new AtomicReference<>();
+    private volatile int currentFPS;
 
-    private final Board board;
-    private Cell[][] cells;
-    private UserBall userBall;
-    private Ball npcBall;
-    private NpcThread npcBrain;
-    private final int rows, cols;
-    private final double cellWidth, cellHeight;
-    private final AtomicInteger userScore;
-    private final AtomicInteger npcScore;
-    private final Hole leftHole;
-    private final Hole rightHole;
-    private AtomicReference<GameState> gameState = new AtomicReference<>();
-    private SimpleBarrier barrier;
-    private PhysicsWorker[] workers;
-
-    public PhysicsImpl(Board board, int rows, int cols) {
+    public AbstractPhysics(Board board, int rows, int cols) {
         this.board = board;
         this.cells = new Cell[rows][cols];
 
@@ -59,7 +57,7 @@ public class PhysicsImpl implements Physics{
                 10.0,
                 new V2d(10, 10)
         );
-        this.transferToCorrectCell(this.npcBall);
+        //this.transferToCorrectCell(this.npcBall);
         this.npcBrain = new NpcThread(npcBall);
 
         this.userBall = new UserBall(
@@ -68,32 +66,25 @@ public class PhysicsImpl implements Physics{
                 100.0,
                 new V2d(10, 10)
         );
-        this.transferToCorrectCell(this.userBall);
+        //this.transferToCorrectCell(this.userBall);
 
-        this.gameState.set(GameState.RUNNING);
+        this.gameState.set(MultiThreadPhysics.GameState.RUNNING);
 
-        this.syncBoard(board);
-
-        int nThreads = Runtime.getRuntime().availableProcessors();
-        this.workers = new PhysicsWorker[nThreads];
-        final int rowsPerThread = this.rows / nThreads;
-
-        this.barrier = new SimpleBarrier(nThreads + 1);
-
-        // Init worker threads
-        for (int i = 0; i < nThreads; i++) {
-            int start = i * rowsPerThread;
-            int end = (i == nThreads - 1) ? rows - 1 : (start + rowsPerThread - 1);
-
-            workers[i] = new PhysicsWorker(this, start, end, barrier);
-            workers[i].start();
-        }
+        //this.syncBoard(board);
 
     }
 
-    @Override
-    public void computeState(long dt) {
 
+
+    @Override
+    public final void computeState(long dt) {
+        initFrame();
+        runParallelStep(dt);
+    }
+
+    protected abstract void runParallelStep(long dt);
+
+    private void initFrame() {
         // Initialize each cell's collision counter before spawning workers
         for (int r = 0; r < rows; r++) {
             int expected = (r == 0) ? 1 : 2;
@@ -101,17 +92,9 @@ public class PhysicsImpl implements Physics{
                 cells[r][c].initFrame(expected);
             }
         }
-
-        for (PhysicsWorker w : workers) {
-            w.setDt(dt);
-        }
-
-        barrier.await();
-        barrier.await();
-
     }
 
-    private void transferToCorrectCell(Ball b) {
+    void transferToCorrectCell(Ball b) {
         // 1. Calculate the indices based on the ball's current position
         int r = (int) (b.getPos().y() / this.cellHeight);
         int c = (int) (b.getPos().x() / this.cellWidth);
@@ -127,35 +110,6 @@ public class PhysicsImpl implements Physics{
     }
 
     @Override
-    public void updateRowMovement(int r, long dt) {
-        for (int c = 0; c < cols; c++) {
-            try {
-                cells[r][c].awaitCollisionsComplete();
-                List<Ball> leavers = cells[r][c].updateMovement(dt, r, c);
-
-                for (Ball b : leavers) {
-                    transferToCorrectCell(b);
-                }
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
-        }
-    }
-
-    @Override
-    public void signalCollisionsDoneForRow(int r) {
-        // Signal all cells in my row
-        for (int c = 0; c < cols; c++) {
-            cells[r][c].signalCollisionsDone();
-        }
-        // Signal the boundary row below (if it exists)
-        if (r + 1 < rows) {
-            for (int c = 0; c < cols; c++) {
-                cells[r + 1][c].signalCollisionsDone();
-            }
-        }
-    }
-
     public void resolveRowCollisions(int r) {
 
         for (int c = 0; c < cols; c++) {
@@ -177,11 +131,6 @@ public class PhysicsImpl implements Physics{
                 }
             }
         }
-    }
-
-    @Override
-    public void updateUserVelocity(double vx, double vy) {
-        this.userBall.setVelocity(new V2d(vx, vy));
     }
 
     private void multiLockResolver(int r, int c, int nr, int nc) {
@@ -214,10 +163,9 @@ public class PhysicsImpl implements Physics{
         return r >= 0 && r < this.rows && c >= 0 && c < this.cols;
     }
 
-
     @Override
     public void updateUserBall(P2d position) {
-        this.userBall.setPosition(position);
+
     }
 
     @Override
@@ -256,26 +204,30 @@ public class PhysicsImpl implements Physics{
         return snapshot;
     }
 
+    @Override
+    public void updateRowMovement(int r, long dt) {
+        for (int c = 0; c < cols; c++) {
+            try {
+                cells[r][c].awaitCollisionsComplete();
+                List<Ball> leavers = cells[r][c].updateMovement(dt, r, c);
 
-    private void syncBoard(final Board board) {
-        this.npcBrain.start();
-
-        for (final Ball ball : board.getBalls()) {
-            int r = (int) (ball.getPos().y() / this.cellHeight);
-            int c = (int)  (ball.getPos().x() / this.cellWidth);
-
-            // Boundary check
-            r = Math.max(0, Math.min(r, rows - 1));
-            c = Math.max(0, Math.min(c, cols - 1));
-
-            this.cells[r][c].addBall(ball);
+                for (Ball b : leavers) {
+                    transferToCorrectCell(b);
+                }
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
         }
     }
 
-    private volatile int currentFPS;
+    @Override
+    public void updateUserVelocity(double vx, double vy) {
+        this.userBall.setVelocity(new V2d(vx, vy));
+    }
 
+    @Override
     public int getCurrentFPS() {
-        return currentFPS;
+        return this.currentFPS;
     }
 
     @Override
@@ -334,16 +286,31 @@ public class PhysicsImpl implements Physics{
     }
 
     @Override
-    public GameState getGameState() {
+    public MultiThreadPhysics.GameState getGameState() {
         return this.gameState.get();
     }
 
     @Override
-    public void setGameState(GameState gameState) {
+    public void setGameState(MultiThreadPhysics.GameState gameState) {
         this.gameState.set(gameState);
     }
 
+    @Override
     public void setFPS(int fps) {
         this.currentFPS = fps;
+    }
+
+    @Override
+    public void signalCollisionsDoneForRow(int r) {
+        // Signal all cells in my row
+        for (int c = 0; c < cols; c++) {
+            cells[r][c].signalCollisionsDone();
+        }
+        // Signal the boundary row below (if it exists)
+        if (r + 1 < rows) {
+            for (int c = 0; c < cols; c++) {
+                cells[r + 1][c].signalCollisionsDone();
+            }
+        }
     }
 }

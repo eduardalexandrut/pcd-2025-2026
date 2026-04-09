@@ -65,9 +65,9 @@ public class Cell {
                 // Check if the ball is inside a hole
                 if (model.getLeftHole().contains(b) || model.getRightHole().contains(b)) {
                     if (b.equals(model.getUserBall())) {
-                        model.setGameState(PhysicsImpl.GameState.NPC_WON);
+                        model.setGameState(MultiThreadPhysics.GameState.NPC_WON);
                     } else if (b.equals(model.getNPCBall())) {
-                        model.setGameState(PhysicsImpl.GameState.USER_WON);
+                        model.setGameState(MultiThreadPhysics.GameState.USER_WON);
                     } else {
                         if (b.isScorableBy(Ball.CHARACTERS.HUMAN)) {
                             model.incrementUserScore();
