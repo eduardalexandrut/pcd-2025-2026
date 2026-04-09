@@ -28,11 +28,6 @@ public class View extends JFrame {
         panel = new VisualiserPanel(w,h);
         getContentPane().add(panel);
 
-        javax.swing.Timer timer = new javax.swing.Timer(16, e -> {
-            panel.repaint(); // This tells Swing to call paintComponent
-        });
-        timer.start();
-
         addWindowListener(new WindowAdapter(){
             public void windowClosing(WindowEvent ev){
                 System.exit(-1);

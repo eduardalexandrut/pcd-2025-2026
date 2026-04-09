@@ -1,11 +1,17 @@
 package pcd.poool.model;
 
+import pcd.poool.view.View;
+
+import javax.swing.*;
+
 public class PhysicsThread extends Thread {
     private final Physics model;
+    private final View view;
     private final long period = 15; // 20ms = 50 FPS
 
-    public PhysicsThread(Physics model) {
+    public PhysicsThread(Physics model,  View view) {
         this.model = model;
+        this.view = view;
     }
 
     @Override
@@ -34,7 +40,10 @@ public class PhysicsThread extends Thread {
 
             model.setFPS((int) fps);
 
-            // 2. Regulate the speed so it doesn't run too fast
+            // 2. repaint UI (SAFE)
+            SwingUtilities.invokeLater(() -> view.repaint());
+
+            // 3. Regulate the speed so it doesn't run too fast
             long used = System.currentTimeMillis() - start;
             long sleep = Math.max(0, period - used);
 
