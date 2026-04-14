@@ -9,39 +9,33 @@ import pcd.sketch02.util.BoundedBufferImpl;
 import java.nio.Buffer;
 import java.util.List;
 
-public class ControllerImpl extends Thread implements Controller {
-    private final BoundedBuffer<Cmd> cmdBuffer;
+public class ControllerImpl implements Controller {
+//    private final BoundedBuffer<Cmd> cmdBuffer;
     private final Physics model;
 
     public ControllerImpl(Physics model) {
         this.model = model;
-        this.cmdBuffer = new BoundedBufferImpl<>(100);
+//        this.cmdBuffer = new BoundedBufferImpl<>(100);
     }
 
-    @Override
-    public void run() {
-        System.out.println("Controller Thread started...");
-        while (!isInterrupted()) {
-            try {
-                Cmd cmd = cmdBuffer.get();
-                cmd.execute(model);
-
-            } catch (InterruptedException e) {
-                System.out.println("Controller interrupted.");
-                break;
-            }
-        }
-    }
+//    @Override
+//    public void run() {
+//        System.out.println("Controller Thread started...");
+//        while (!isInterrupted()) {
+//            try {
+//                Cmd cmd = cmdBuffer.get();
+//                cmd.execute(model);
+//
+//            } catch (InterruptedException e) {
+//                System.out.println("Controller interrupted.");
+//                break;
+//            }
+//        }
+//    }
 
     @Override
     public void processInput(String key) {
-        Cmd moveCmd = new MoveUserCmd(key);
-
-        try {
-            cmdBuffer.put(moveCmd);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
+        new MoveUserCmd(key).execute(model);
     }
 
     @Override

@@ -87,7 +87,10 @@ public class View extends JFrame {
             super.paintComponent(g); // This handles the clearRect and background
             Graphics2D g2 = (Graphics2D) g;
 
-            g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+            g2.setRenderingHint(
+                    RenderingHints.KEY_ANTIALIASING,
+                    RenderingHints.VALUE_ANTIALIAS_OFF
+            );
 
             // --- 1. DRAW THE CROSSHAIR (from your old paint method) ---
             g2.setColor(Color.LIGHT_GRAY);
@@ -114,17 +117,17 @@ public class View extends JFrame {
             }
 
             // Draw User's ball
-            BallState userBall = controller.getUserBallState();
-            // Overdraw the user ball with its specific label
-            if (userBall != null) {
-                this.drawBall(userBall, g2, "H");
-            }
-
-            // Draw NPC's ball
-            BallState npcBall = controller.getNPCBallState();
-            if (npcBall != null) {
-                this.drawBall(npcBall, g2, "B");
-            }
+//            BallState userBall = controller.getUserBallState();
+//            // Overdraw the user ball with its specific label
+//            if (userBall != null) {
+//                this.drawBall(userBall, g2, "H");
+//            }
+//
+//            // Draw NPC's ball
+//            BallState npcBall = controller.getNPCBallState();
+//            if (npcBall != null) {
+//                this.drawBall(npcBall, g2, "B");
+//            }
 
             // Draw left and right holes
             Hole leftHole = controller.getLeftHole();
@@ -155,7 +158,7 @@ public class View extends JFrame {
 
             // --- A. Draw the Fill (White) ---
             g2.setColor(Color.WHITE);
-            g2.fillOval(x - r, y - r, r * 2, r * 2);
+//            g2.fillOval(x - r, y - r, r * 2, r * 2);
 
             // --- B. Draw the Border (Black) ---
             g2.setColor(Color.BLACK);
@@ -192,7 +195,7 @@ public class View extends JFrame {
             int r = (int) hole.radius();
 
             g.setColor(Color.BLACK);
-            g.fillOval(x - r, y - r, r * 2, r * 2);
+           // g.fillOval(x - r, y - r, r * 2, r * 2);
 
             g.setStroke(new BasicStroke(2));
             g.drawOval(x - r, y - r, r * 2, r * 2);

@@ -17,7 +17,6 @@ public abstract class AbstractPhysics implements Physics {
     protected Cell[][] cells;
     protected UserBall userBall;
     protected Ball npcBall;
-    protected NpcThread npcBrain;
     protected final int rows, cols;
     protected final double cellWidth, cellHeight;
     protected final AtomicInteger userScore;
@@ -58,7 +57,6 @@ public abstract class AbstractPhysics implements Physics {
                 new V2d(10, 10)
         );
         //this.transferToCorrectCell(this.npcBall);
-        this.npcBrain = new NpcThread(npcBall);
 
         this.userBall = new UserBall(
                 new P2d(300, 300),
@@ -95,7 +93,6 @@ public abstract class AbstractPhysics implements Physics {
     }
 
     void syncBoard(final Board board) {
-        this.npcBrain.start();
 
         for (final Ball ball : board.getBalls()) {
             int r = (int) (ball.getPos().y() / this.cellHeight);

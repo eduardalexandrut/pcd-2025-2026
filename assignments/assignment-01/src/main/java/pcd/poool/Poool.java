@@ -15,12 +15,12 @@ public class Poool {
     public static void main(String[] args) {
         // Setup the World
         Board board = new Board(1200, 1200);
-        Physics physics = new SequentialPhysics(board, 71, 71);
+        Physics physics = new MultiThreadPhysics(board, 20, 20);
 
 
         // Start the Engines
         ControllerImpl controller = new ControllerImpl(physics);
-        controller.start();
+        //controller.start();
 
         // Open the Window
         SwingUtilities.invokeLater(() -> {

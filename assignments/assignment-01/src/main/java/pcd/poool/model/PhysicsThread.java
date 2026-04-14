@@ -8,6 +8,8 @@ public class PhysicsThread extends Thread {
     private final Physics model;
     private final View view;
     private final long period = 15; // 20ms = 50 FPS
+    private long lastNpcKick = 0;
+    private final long npcPeriod = 2000;
 
     public PhysicsThread(Physics model,  View view) {
         this.model = model;
@@ -33,6 +35,9 @@ public class PhysicsThread extends Thread {
 
             long start = System.currentTimeMillis();
 
+            // NPC update
+            updateNpc();
+
             // 1. Update the math (Move balls, check collisions)
             model.computeState(period);
 
@@ -55,6 +60,22 @@ public class PhysicsThread extends Thread {
         }
 
         System.out.println("Simulation Ended. Final State: " + model.getGameState());
+    }
+
+    private void updateNpc() {
+        long now = System.currentTimeMillis();
+
+        if (now - lastNpcKick > npcPeriod) {
+
+            V2d newVel = new V2d(
+                    Math.random() * 200,
+                    Math.random() * 200
+            );
+
+            model.getNPCBall().kick(newVel);
+
+            lastNpcKick = now;
+        }
     }
 
     private void checkEndGame() {
