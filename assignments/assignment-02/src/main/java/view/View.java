@@ -86,15 +86,14 @@ public class View extends JFrame {
 
         // ===== BUTTON ACTIONS =====
         startButton.addActionListener(e -> {
-            System.out.println("Start");
-//            controller.start(
-//                    folderField.getText(),
-//                    Integer.parseInt(nbField.getText()),
-//                    Long.parseLong(maxSizeField.getText())
-//            );
+            controller.start(
+                    folderField.getText(),
+                    Integer.parseInt(nbField.getText()),
+                    Long.parseLong(maxSizeField.getText())
+            );
         });
 
-        stopButton.addActionListener(e -> System.out.println("Stop"));
+        stopButton.addActionListener(e -> controller.stop());
 
         addWindowListener(new WindowAdapter(){
             public void windowClosing(WindowEvent ev){
