@@ -3,7 +3,7 @@ import view.View;
 
 import javax.swing.*;
 
-public class FSStatLib {
+public class Main {
     public static void main(String[] args) {
         final Controller controller = new Controller();
 
