@@ -11,7 +11,13 @@
         <option value="$PROJECT_DIR$/lab-activities/lab-activity-05/pcd-lab-05/pom.xml" />
         <option value="$PROJECT_DIR$/assignments/assignment-01/pom.xml" />
         <option value="$PROJECT_DIR$/lab-activities/lab-activity-06/pcd-lab-06/pom.xml" />
+        <option value="$PROJECT_DIR$/assignments/assignment-02/pom.xml" />
       </list>
+    </option>
+    <option name="ignoredFiles">
+      <set>
+        <option value="$PROJECT_DIR$/assignments/assignment-02/untitled/pom.xml" />
+      </set>
     </option>
   </component>
   <component name="ProjectRootManager" version="2" languageLevel="JDK_21" default="true" project-jdk-name="21" project-jdk-type="JavaSDK">

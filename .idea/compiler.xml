@@ -13,7 +13,12 @@
         <module name="pcd-lab-03" />
         <module name="pcd-lab-02" />
         <module name="pcd-ass-01" />
+        <module name="pcd-ass-02" />
       </profile>
     </annotationProcessing>
+    <bytecodeTargetLevel>
+      <module name="pcd-ass-01 (1)" target="17" />
+      <module name="untitled" target="17" />
+    </bytecodeTargetLevel>
   </component>
 </project>
