@@ -1,4 +1,3 @@
 package lib;
 
-public record FSReport(long totalGiles, long[] bands) {
-}
+public record FSReport(long totalFiles, long[] bands){};
