@@ -13,8 +13,10 @@ import java.nio.file.Path;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibVT implements FSStatLib {
+    private final int THROTTLE_SIZE = 500;
 
     private ExecutorService executor;
     private FSUpdateListener listener;
@@ -26,6 +28,7 @@ public class FSStatLibVT implements FSStatLib {
     private FSStats stats;
 
     private final AtomicBoolean isCompleted = new AtomicBoolean(false);
+    private final AtomicInteger activeTasks = new AtomicInteger(0);
 
     @Override
     public void getFSReport(Path dir, long maxFS, int nb, FSUpdateListener listener) {
@@ -39,24 +42,17 @@ public class FSStatLibVT implements FSStatLib {
 
         this.stats = new FSStats(nb);
 
-        this.executor.submit(() -> scanDirectory(this.dir));
+        submitTask(() -> scanDirectory(this.dir));
 
-//        this.executor.submit(() -> {
-//            executor.shutdown();
-//            try {
-//                executor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.MILLISECONDS);
-//            } catch (InterruptedException ignored) {}
-//
-//            listener.onComplete(stats.snapshot());
-//        });
     }
 
     @Override
     public void stop() {
-        this.isCompleted.set(true);
-
-        if (this.executor != null) {
-            this.executor.shutdown();
+        if (!this.isCompleted.getAndSet(true)) {
+            if (this.executor != null) {
+                executor.shutdownNow();
+            }
+            listener.onComplete(stats.snapshot());
         }
     }
 
@@ -70,9 +66,9 @@ public class FSStatLibVT implements FSStatLib {
                 if (isCompleted.get()) {return;}
 
                 if (Files.isDirectory(path)) {
-                    this.executor.submit(() -> scanDirectory(path));
+                    submitTask(() -> scanDirectory(path));
                 } else {
-                    executor.submit(() -> processFile(path));
+                    submitTask(() -> processFile(path));
                 }
             }
         } catch (IOException e) {
@@ -88,7 +84,9 @@ public class FSStatLibVT implements FSStatLib {
             final int band = computeBand(fileSize);
 
             stats.addFile(band);
-            listener.onUpdate(stats.snapshot());
+            if (stats.getTotalFiles() % THROTTLE_SIZE == 0) {
+                listener.onUpdate(stats.snapshot());
+            }
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -101,5 +99,31 @@ public class FSStatLibVT implements FSStatLib {
             band = nb;
 
         return band;
+    }
+
+    private void submitTask(Runnable task) {
+        if (this.isCompleted.get()) {return;}
+
+        activeTasks.incrementAndGet();
+
+        executor.submit(() -> {
+            try {
+                task.run();
+            } finally {
+                if (activeTasks.decrementAndGet() == 0) {
+                    complete();
+                }
+            }
+        });
+    }
+
+    private void complete() {
+        if (!isCompleted.getAndSet(true)) {
+            try {
+                listener.onComplete(stats.snapshot());
+            } finally {
+                executor.shutdown();
+            }
+        }
     }
 }

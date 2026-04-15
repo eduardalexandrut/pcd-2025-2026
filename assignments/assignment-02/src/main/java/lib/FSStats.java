@@ -17,4 +17,8 @@ public class FSStats {
         this.totalFiles += 1;
         this.bands[band] += 1;
     }
+
+    public long getTotalFiles() {
+        return this.totalFiles;
+    }
 }
