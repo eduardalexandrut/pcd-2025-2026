@@ -4,7 +4,7 @@ public class FSStats {
     private long totalFiles;
     private long[] bands;
 
-    FSStats(int nb) {
+    public FSStats(int nb) {
         this.totalFiles = 0;
         this.bands = new long[nb + 1];
     }

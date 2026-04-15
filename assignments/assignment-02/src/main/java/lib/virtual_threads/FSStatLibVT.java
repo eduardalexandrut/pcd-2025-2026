@@ -21,9 +21,9 @@ public class FSStatLibVT implements FSStatLib {
     private Path dir;
     private long maxFS;
     private int nb;
-    private int bandSize;
+    private long bandSize;
 
-    private FSStats report;
+    private FSStats stats;
 
     private final AtomicBoolean isCompleted = new AtomicBoolean(false);
 
@@ -32,21 +32,23 @@ public class FSStatLibVT implements FSStatLib {
         this.dir = dir;
         this.maxFS = maxFS;
         this.nb = nb;
-        this.bandSize = (int) (maxFS / nb);
+        this.bandSize = (maxFS / nb);
         this.listener = listener;
         this.isCompleted.set(false);
         this.executor = Executors.newVirtualThreadPerTaskExecutor();
 
+        this.stats = new FSStats(nb);
+
         this.executor.submit(() -> scanDirectory(this.dir));
 
-        this.executor.submit(() -> {
-            executor.shutdown();
-            try {
-                executor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.MILLISECONDS);
-            } catch (InterruptedException ignored) {}
-
-            listener.onComplete(report.snapshot());
-        });
+//        this.executor.submit(() -> {
+//            executor.shutdown();
+//            try {
+//                executor.awaitTermination(Long.MAX_VALUE, java.util.concurrent.TimeUnit.MILLISECONDS);
+//            } catch (InterruptedException ignored) {}
+//
+//            listener.onComplete(stats.snapshot());
+//        });
     }
 
     @Override
@@ -85,8 +87,8 @@ public class FSStatLibVT implements FSStatLib {
             final long fileSize = Files.size(path);
             final int band = computeBand(fileSize);
 
-            report.addFile(band);
-            listener.onUpdate(report.snapshot());
+            stats.addFile(band);
+            listener.onUpdate(stats.snapshot());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }

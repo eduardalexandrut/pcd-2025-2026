@@ -1,6 +1,7 @@
 package view;
 
 import controller.Controller;
+import lib.FSReport;
 
 import javax.swing.*;
 import java.awt.*;
@@ -105,15 +106,16 @@ public class View extends JFrame {
     }
 
     // ===== UPDATE VIEW =====
-    public void render(long[] bands, long totalFiles){
-        panel.setBands(bands);
+    public void render(FSReport report){
+
+        panel.setBands(report.bands());
 
         StringBuilder sb = new StringBuilder();
-        sb.append("Total files: ").append(totalFiles).append("\n\n");
+        sb.append("Total files: ").append(report.totalFiles()).append("\n\n");
 
-        for (int i = 0; i < bands.length; i++){
+        for (int i = 0; i < report.bands().length; i++){
             sb.append("Band ").append(i).append(": ")
-                    .append(bands[i]).append("\n");
+                    .append(report.bands()[i]).append("\n");
         }
 
         statsArea.setText(sb.toString());
