@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibVertx implements FSStatLib {
-    private final int THROTTLE_SIZE = 10;
+    private final int THROTTLE_SIZE = 300;
     private Vertx vertx;
     private FSUpdateListener listener;
     private Path dir;
