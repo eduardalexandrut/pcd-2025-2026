@@ -1,4 +1,5 @@
 import controller.Controller;
+import lib.event_loop.FSStatLibVertx;
 import lib.virtual_threads.FSStatLibVT;
 import model.Model;
 import view.View;
@@ -7,7 +8,7 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        final Model model = new Model(new FSStatLibVT());
+        final Model model = new Model(new FSStatLibVertx());
         final Controller controller = new Controller(model);
 
         SwingUtilities.invokeLater(() -> {

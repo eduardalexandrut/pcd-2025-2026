@@ -7,15 +7,12 @@ import lib.FSStatLib;
 import lib.FSStats;
 import lib.FSUpdateListener;
 
-import java.io.IOException;
-import java.nio.file.DirectoryStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibVertx implements FSStatLib {
-    private final int THROTTLE_SIZE = 500;
+    private final int THROTTLE_SIZE = 10;
     private Vertx vertx;
     private FSUpdateListener listener;
     private Path dir;
@@ -33,16 +30,22 @@ public class FSStatLibVertx implements FSStatLib {
     public void getFSReport(Path dir, long maxFS, int nb, FSUpdateListener listener) {
         this.vertx = Vertx.vertx();
 
-        FileSystem fs = vertx.fileSystem();
-        fs.readDir(String.valueOf(dir)).onComplete(res -> {
-            scanDirectory(dir);
-        });
-//        this.vertx.deployVerticle(new MyReactiveAgent(), new DeploymentOptions().setWorkerPoolSize(workerPoolSize));
+        this.listener = listener;
+        this.nb = nb;
+        this.maxFS = maxFS;
+        this.bandSize = maxFS / nb;
+
+        this.isCompleted.set(false);
+        this.activeTasks.set(0);
+
+        this.stats = new FSStats(nb);
+
+        scanDirectory(dir);
     }
 
     @Override
     public void stop() {
-
+        isCompleted.set(true);
     }
 
     private void scanDirectory(Path dir) {
@@ -50,35 +53,82 @@ public class FSStatLibVertx implements FSStatLib {
             return;
         }
 
-        try (DirectoryStream<Path> stream = Files.newDirectoryStream(dir)) {
-            for (Path path : stream) {
-                if (isCompleted.get()) {return;}
+        activeTasks.incrementAndGet();
 
-                if (Files.isDirectory(path)) {
-//                    submitTask(() -> scanDirectory(path));
-                } else {
-//                    submitTask(() -> processFile(path));
+        FileSystem fs = vertx.fileSystem();
+        fs.readDir(String.valueOf(dir)).onComplete(res -> {
+            try {
+
+                if (isCompleted.get()) {
+                        return;
+                }
+
+                if (res.succeeded()) {
+                    for (final String entry : res.result()) {
+                        if (isCompleted.get()) {
+                            return;
+                        }
+
+                        activeTasks.incrementAndGet();
+
+                        fs.props(entry).onComplete(props -> {
+                            try {
+                                if (isCompleted.get()) {
+                                    return;
+                                }
+
+                                if (props.succeeded()) {
+
+                                    if (props.result().isDirectory()) {
+                                        scanDirectory(Path.of(entry));
+                                    } else {
+                                        processFile(Path.of(entry));
+                                    }
+                                }
+                            } finally {
+                                if (activeTasks.decrementAndGet() == 0) {
+                                    complete();
+                                }
+                            }
+
+                        });
+                    }
+                }
+            } finally {
+                if (activeTasks.decrementAndGet() == 0) {
+                    complete();
                 }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+
+        });
     }
 
     private void processFile(Path path) {
         if (isCompleted.get()) {return;}
 
-        try {
-            final long fileSize = Files.size(path);
-            final int band = computeBand(fileSize);
+        FileSystem fs = vertx.fileSystem();
 
-            stats.addFile(band);
-            if (stats.getTotalFiles() % THROTTLE_SIZE == 0) {
-                listener.onUpdate(stats.snapshot());
+        activeTasks.incrementAndGet();
+
+        fs.props(path.toString()).onComplete(res -> {
+            try {
+                if (isCompleted.get()) {return;}
+
+                if (res.succeeded()) {
+                    final long fileSize = res.result().size();
+                    final int band = computeBand(fileSize);
+
+                    stats.addFile(band);
+                    if (stats.getTotalFiles() % THROTTLE_SIZE == 0) {
+                        listener.onUpdate(stats.snapshot());
+                    }
+                }
+            } finally {
+                if (activeTasks.decrementAndGet() == 0) {
+                    complete();
+                }
             }
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        });
     }
 
     private int computeBand(long fileSize) {
@@ -95,7 +145,9 @@ public class FSStatLibVertx implements FSStatLib {
             try {
                 listener.onComplete(stats.snapshot());
             } finally {
-//                executor.shutdown();
+                if (vertx != null) {
+                    vertx.close();
+                }
             }
         }
     }
