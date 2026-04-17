@@ -2,6 +2,7 @@ package lib.reactivex;
 
 import io.reactivex.rxjava3.core.BackpressureStrategy;
 import io.reactivex.rxjava3.core.Flowable;
+import io.reactivex.rxjava3.core.Single;
 import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.Vertx;
@@ -12,11 +13,13 @@ import lib.FSUpdateListener;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibReactive implements FSStatLib {
-    private Vertx vertx;
+    private Vertx vertx = Vertx.vertx();
     private FSUpdateListener listener;
     private Path dir;
     private long maxFS;
@@ -31,7 +34,6 @@ public class FSStatLibReactive implements FSStatLib {
 
     @Override
     public void getFSReport(Path dir, long maxFS, int nb, FSUpdateListener listener) {
-        this.vertx = Vertx.vertx();
 
         this.listener = listener;
         this.nb = nb;
@@ -41,17 +43,18 @@ public class FSStatLibReactive implements FSStatLib {
 
         this.stats = new FSStats(nb);
 
-        Flowable<Path> files = scanDirectory(dir).subscribeOn(Schedulers.io());
+//        Flowable<Path> files = scanDirectory(dir).subscribeOn(Schedulers.io());
 
-        disposable = files
-                .map(Files::size)
-                .map(this::computeBand)
+        disposable = scanDirectory(dir)
+                .map(sizedPath -> Math.min((int) (sizedPath.size() / bandSize), nb))
                 .doOnNext(stats::addFile)
+                .buffer(200, TimeUnit.MILLISECONDS)
                 .doOnNext(r -> listener.onUpdate(stats.snapshot()))
                 .doOnComplete(() -> listener.onComplete(stats.snapshot()))
-                .buffer(300)
                 .subscribe();
     }
+
+    private record SizedPath(Path path, long size) {}
 
     @Override
     public void stop() {
@@ -60,49 +63,25 @@ public class FSStatLibReactive implements FSStatLib {
         }
     }
 
-    private Flowable<Path> scanDirectory(Path dir) {
-       return Flowable.create(emitter -> {
-            if (emitter.isCancelled()) {return;}
+    private Flowable<SizedPath> scanDirectory(Path dir) {
+        FileSystem fs = vertx.fileSystem();
 
-            FileSystem fs = vertx.fileSystem();
+        return Single.fromCompletionStage(fs.readDir(dir.toString()).toCompletionStage())
+                .flatMapPublisher(entries -> {
+                    List<Flowable<SizedPath>> flowables = entries.stream()
+                            .map(entry -> Single.fromCompletionStage(
+                                            fs.props(entry).toCompletionStage())
+                                    .flatMapPublisher(props -> {
+                                        if (props.isDirectory()) {
+                                            return scanDirectory(Path.of(entry));
+                                        } else {
 
-            fs.readDir(dir.toString()).onComplete(result -> {
-                if (emitter.isCancelled()) {return;}
-
-                if (result.failed()) {
-                    emitter.onError(result.cause());
-                    return;
-                }
-
-                for (final String entry : result.result()) {
-
-                    fs.props(entry).onComplete(propRes -> {
-
-                        if (emitter.isCancelled()) {return;}
-
-                        if (propRes.failed()) {
-                            emitter.onError(propRes.cause());
-                            return;
-                        }
-
-                        if (propRes.result().isDirectory()) {
-                            scanDirectory(Path.of(entry)).subscribe(emitter::onNext, emitter::onError);
-                        } else {
-                            emitter.onNext(Path.of(entry));
-                        }
-                    });
-                }
-            });
-       }, BackpressureStrategy.BUFFER);
-    }
-
-    private int computeBand(long fileSize) {
-        int band = (int) (fileSize / bandSize);
-
-        if (band >= nb)
-            band = nb;
-
-        return band;
+                                            return Flowable.just(new SizedPath(Path.of(entry), props.size()));
+                                        }
+                                    }))
+                            .toList();
+                    return Flowable.merge(flowables, 8);
+                });
     }
 
 }

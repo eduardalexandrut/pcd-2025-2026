@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibVertx implements FSStatLib {
     private final int THROTTLE_SIZE = 300;
-    private Vertx vertx;
+    private Vertx vertx =  Vertx.vertx();
     private FSUpdateListener listener;
     private Path dir;
     private long maxFS;
@@ -28,7 +28,6 @@ public class FSStatLibVertx implements FSStatLib {
 
     @Override
     public void getFSReport(Path dir, long maxFS, int nb, FSUpdateListener listener) {
-        this.vertx = Vertx.vertx();
 
         this.listener = listener;
         this.nb = nb;
