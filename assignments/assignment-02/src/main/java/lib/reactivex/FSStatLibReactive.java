@@ -19,7 +19,8 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class FSStatLibReactive implements FSStatLib {
-    private Vertx vertx = Vertx.vertx();
+    private static final int DEFAULT_CONCURRENCY = 8;
+
     private FSUpdateListener listener;
     private Path dir;
     private long maxFS;
@@ -28,9 +29,6 @@ public class FSStatLibReactive implements FSStatLib {
 
     private FSStats stats;
     private Disposable disposable;
-
-    private final AtomicBoolean isCompleted = new AtomicBoolean(false);
-    private final AtomicInteger activeTasks = new AtomicInteger(0);
 
     @Override
     public void getFSReport(Path dir, long maxFS, int nb, FSUpdateListener listener) {
@@ -43,18 +41,18 @@ public class FSStatLibReactive implements FSStatLib {
 
         this.stats = new FSStats(nb);
 
-//        Flowable<Path> files = scanDirectory(dir).subscribeOn(Schedulers.io());
-
         disposable = scanDirectory(dir)
-                .map(sizedPath -> Math.min((int) (sizedPath.size() / bandSize), nb))
+                .map(Files::size)
+                .map(size -> Math.min((int) (size / bandSize), nb))
                 .doOnNext(stats::addFile)
                 .buffer(200, TimeUnit.MILLISECONDS)
-                .doOnNext(r -> listener.onUpdate(stats.snapshot()))
+                .filter(batch -> !batch.isEmpty())
+                .doOnNext(batch -> listener.onUpdate(stats.snapshot()))
                 .doOnComplete(() -> listener.onComplete(stats.snapshot()))
                 .subscribe();
     }
 
-    private record SizedPath(Path path, long size) {}
+//    private record SizedPath(Path path, long size) {}
 
     @Override
     public void stop() {
@@ -63,25 +61,44 @@ public class FSStatLibReactive implements FSStatLib {
         }
     }
 
-    private Flowable<SizedPath> scanDirectory(Path dir) {
-        FileSystem fs = vertx.fileSystem();
-
-        return Single.fromCompletionStage(fs.readDir(dir.toString()).toCompletionStage())
-                .flatMapPublisher(entries -> {
-                    List<Flowable<SizedPath>> flowables = entries.stream()
-                            .map(entry -> Single.fromCompletionStage(
-                                            fs.props(entry).toCompletionStage())
-                                    .flatMapPublisher(props -> {
-                                        if (props.isDirectory()) {
-                                            return scanDirectory(Path.of(entry));
-                                        } else {
-
-                                            return Flowable.just(new SizedPath(Path.of(entry), props.size()));
-                                        }
-                                    }))
-                            .toList();
-                    return Flowable.merge(flowables, 8);
-                });
+//    private Flowable<SizedPath> scanDirectory(Path dir) {
+//        FileSystem fs = vertx.fileSystem();
+//
+//        return Single.fromCompletionStage(fs.readDir(dir.toString()).toCompletionStage())
+//                .flatMapPublisher(entries -> {
+//                    List<Flowable<SizedPath>> flowables = entries.stream()
+//                            .map(entry -> Single.fromCompletionStage(
+//                                            fs.props(entry).toCompletionStage())
+//                                    .flatMapPublisher(props -> {
+//                                        if (props.isDirectory()) {
+//                                            return scanDirectory(Path.of(entry));
+//                                        } else {
+//                                            return Flowable.just(new SizedPath(Path.of(entry), props.size()));
+//                                        }
+//                                    }))
+//                            .toList();
+//                    return Flowable.merge(flowables, 8);
+//                });
+//    }
+    private Flowable<Path> scanDirectory(Path dir) {
+        return Single.fromCallable(() -> {
+                    try (var stream = Files.list(dir)) {
+                        return stream.toList();
+                    }
+                })
+                .subscribeOn(Schedulers.io())        // readDir on I/O thread
+                .flatMapPublisher(entries -> Flowable.fromIterable(entries)
+                        .flatMap(entry -> Single.fromCallable(() -> entry)
+                                .subscribeOn(Schedulers.io())
+                                .flatMapPublisher(path -> {
+                                    if (Files.isDirectory(path)) {
+                                        return scanDirectory(path);   // recurse
+                                    } else {
+                                        return Flowable.just(path);
+                                    }
+                                }), DEFAULT_CONCURRENCY
+                        )
+                );
     }
 
 }
