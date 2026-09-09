@@ -3,6 +3,7 @@ package lib.event_loop;
 import io.vertx.core.*;
 import io.vertx.core.buffer.Buffer;
 import io.vertx.core.file.FileSystem;
+import lib.FSReport;
 import lib.FSStatLib;
 import lib.FSStats;
 import lib.FSUpdateListener;
@@ -40,6 +41,11 @@ public class FSStatLibVertx implements FSStatLib {
         this.stats = new FSStats(nb);
 
         scanDirectory(dir);
+    }
+
+    @Override
+    public FSReport getCurrentReport() {
+        return stats != null ? stats.snapshot() : new FSReport(0, new long[nb + 1]);
     }
 
     @Override
@@ -118,9 +124,6 @@ public class FSStatLibVertx implements FSStatLib {
                     final int band = computeBand(fileSize);
 
                     stats.addFile(band);
-                    if (stats.getTotalFiles() % THROTTLE_SIZE == 0) {
-                        listener.onUpdate(stats.snapshot());
-                    }
                 }
             } finally {
                 if (activeTasks.decrementAndGet() == 0) {

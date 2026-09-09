@@ -20,6 +20,7 @@
     </annotationProcessing>
     <bytecodeTargetLevel>
       <module name="pcd-ass-01 (1)" target="17" />
+      <module name="pcd-lab-11" target="21" />
       <module name="untitled" target="17" />
     </bytecodeTargetLevel>
   </component>

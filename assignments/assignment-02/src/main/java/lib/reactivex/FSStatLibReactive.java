@@ -7,6 +7,7 @@ import io.reactivex.rxjava3.disposables.Disposable;
 import io.reactivex.rxjava3.schedulers.Schedulers;
 import io.vertx.core.Vertx;
 import io.vertx.core.file.FileSystem;
+import lib.FSReport;
 import lib.FSStatLib;
 import lib.FSStats;
 import lib.FSUpdateListener;
@@ -45,14 +46,18 @@ public class FSStatLibReactive implements FSStatLib {
                 .map(Files::size)
                 .map(size -> Math.min((int) (size / bandSize), nb))
                 .doOnNext(stats::addFile)
-                .buffer(200, TimeUnit.MILLISECONDS)
-                .filter(batch -> !batch.isEmpty())
-                .doOnNext(batch -> listener.onUpdate(stats.snapshot()))
                 .doOnComplete(() -> listener.onComplete(stats.snapshot()))
-                .subscribe();
+                .subscribe(
+                        x -> {},
+                        err -> listener.onComplete(stats.snapshot())
+                );
     }
 
-//    private record SizedPath(Path path, long size) {}
+    @Override
+    public FSReport getCurrentReport() {
+        return stats != null ? stats.snapshot() : new FSReport(0, new long[nb + 1]);
+    }
+
 
     @Override
     public void stop() {

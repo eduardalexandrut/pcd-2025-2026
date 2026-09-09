@@ -19,12 +19,16 @@ public class Model {
         this.listener = listener;
     }
 
+    public FSReport getCurrentReport() {
+        return lib.getCurrentReport();
+    }
+
     public void start(Path path, long max, int nb) {
         this.lib.getFSReport(path, max, nb, new FSUpdateListener() {
-            @Override
-            public void onUpdate(FSReport report) {
-                listener.onUpdate(report);
-            }
+//            @Override
+//            public void onUpdate(FSReport report) {
+//                listener.onUpdate(report);
+//            }
 
             @Override
             public void onComplete(FSReport report) {

@@ -9,7 +9,7 @@ import javax.swing.*;
 
 public class Main {
     public static void main(String[] args) {
-        final Model model = new Model(new FSStatLibReactive());
+        final Model model = new Model(new FSStatLibVertx());
         final Controller controller = new Controller(model);
 
         SwingUtilities.invokeLater(() -> {

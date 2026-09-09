@@ -18,6 +18,13 @@ public class FSStats {
         this.bands[band] += 1;
     }
 
+    public synchronized void mergeReport(FSReport report) {
+        this.totalFiles += report.totalFiles();
+        for (int i = 0; i < report.bands().length; i++) {
+            this.bands[i] += report.bands()[i];
+        }
+    }
+
     public long getTotalFiles() {
         return this.totalFiles;
     }

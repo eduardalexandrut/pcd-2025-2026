@@ -15,6 +15,20 @@ import java.awt.event.WindowEvent;
 
 public class View extends JFrame {
 
+    private Timer refreshTimer;
+
+    public void startPolling() {
+        refreshTimer = new Timer(200, e -> {
+            render(controller.getCurrentReport()); // pull every 200ms
+        });
+        refreshTimer.start();
+    }
+
+    public void stopPolling() {
+        if (refreshTimer != null) refreshTimer.stop();
+    }
+
+
     private final Controller controller;
     private final VisualiserPanel panel;
 

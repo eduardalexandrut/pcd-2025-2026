@@ -20,19 +20,20 @@ public class Controller {
         this.view = view;
     }
 
-    public void start(final String folder, final int nb, final long maxSize) {
-        this.model.setListener(new ModelListener() {
-            @Override
-            public void onUpdate(FSReport report) {
-                SwingUtilities.invokeLater(() -> view.render(report));
-            }
+    public FSReport getCurrentReport() {
+        return model.getCurrentReport();
+    }
 
+    public void start(final String folder, final int nb, final long maxSize) {
+        view.startPolling();
+        model.setListener(new ModelListener() {
             @Override
             public void onComplete(FSReport report) {
+                view.stopPolling();
                 SwingUtilities.invokeLater(() -> view.render(report));
             }
         });
-        this.model.start(Path.of(folder), maxSize, nb);
+        model.start(Path.of(folder), maxSize, nb);
     }
 
     public void stop() {
