@@ -46,7 +46,7 @@ func Coord(n_peers int, coord_ch chan int, channels []chan MinMaxMsg) {
 func main() {
 	fmt.Println("Booted.")
 
-	n_peers := 10
+	n_peers := 8
 
 	coord_ch := make(chan int)
 	channels := make([]chan MinMaxMsg, n_peers)
