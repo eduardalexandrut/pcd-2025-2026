@@ -14,13 +14,13 @@ type MatchResult struct {
 	winner   PlayerInfo
 }
 
-func player(id int, moveChan chan<- int) {
+func Player(id int, moveChan chan<- int) {
 	move := rand.IntN(2)
 	fmt.Printf("[Player %d] has picked: %d\n", id, move)
 	moveChan <- move
 }
 
-func coord(nPlayers int) {
+func Coord(nPlayers int) {
 	players := make([]PlayerInfo, nPlayers)
 	for i := 0; i < nPlayers; i++ {
 		players[i] = PlayerInfo{id: i + 1}
@@ -56,7 +56,7 @@ func coord(nPlayers int) {
 		roundNum++
 	}
 
-	fmt.Printf("\n !!! THE WINNER OF THE CHAMPIONSHIP IS %d! 🏆\n", players[0].id)
+	fmt.Printf("\n !!! THE WINNER OF THE CHAMPIONSHIP IS %d!\n", players[0].id)
 }
 
 func playMatch(matchIdx int, p1, p2 PlayerInfo, roundNum int, resultChan chan MatchResult) {
@@ -70,8 +70,8 @@ func playMatch(matchIdx int, p1, p2 PlayerInfo, roundNum int, resultChan chan Ma
 	for {
 		coord_move := rand.IntN(2)
 
-		go player(p1.id, moveChan1)
-		go player(p2.id, moveChan2)
+		go Player(p1.id, moveChan1)
+		go Player(p2.id, moveChan2)
 
 		m1 := <-moveChan1
 		m2 := <-moveChan2
@@ -102,10 +102,27 @@ func playMatch(matchIdx int, p1, p2 PlayerInfo, roundNum int, resultChan chan Ma
 }
 
 func main() {
-	nPlayers := 8
+	var nPlayers int
+
+	for {
+		fmt.Print("Enter the number of players (must be an even number): ")
+		_, err := fmt.Scanf("%d", &nPlayers)
+		if err != nil || nPlayers <= 0 {
+			fmt.Println("Invalid input. Please enter a positive integer.")
+			continue
+		}
+
+		if nPlayers%2 != 0 {
+			fmt.Println("The number of players must be even. Try again.")
+			continue
+		}
+
+		break
+	}
+
 	fmt.Printf("Start heads & tails: %d players (Centralized Solution)\n", nPlayers)
 
-	coord(nPlayers)
+	Coord(nPlayers)
 
 	for {
 	}
